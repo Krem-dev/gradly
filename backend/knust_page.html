@@ -1,0 +1,678 @@
+<!DOCTYPE html><html lang="en"><head>
+    
+    <!-- Google tag (gtag.js) -->
+    <script src="https://embed.tawk.to/_s/v4/app/694a2ed6f00/js/twk-main.js" charset="UTF-8" crossorigin="*"></script><script src="https://embed.tawk.to/_s/v4/app/694a2ed6f00/js/twk-vendor.js" charset="UTF-8" crossorigin="*"></script><script src="https://embed.tawk.to/_s/v4/app/694a2ed6f00/js/twk-chunk-vendors.js" charset="UTF-8" crossorigin="*"></script><script src="https://embed.tawk.to/_s/v4/app/694a2ed6f00/js/twk-chunk-common.js" charset="UTF-8" crossorigin="*"></script><script src="https://embed.tawk.to/_s/v4/app/694a2ed6f00/js/twk-runtime.js" charset="UTF-8" crossorigin="*"></script><script src="https://embed.tawk.to/_s/v4/app/694a2ed6f00/js/twk-app.js" charset="UTF-8" crossorigin="*"></script><script async="" src="https://embed.tawk.to/680a62464a25191909a0433f/1ipk8vpoj" charset="UTF-8" crossorigin="*"></script><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-Y5Q744DEL2"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-Y5Q744DEL2');
+    </script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KNUST Admission Portal</title>
+    <link rel="shortcut icon" href="/admissions/apply/assets/images/logo-light.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.6.0/css/fontawesome.min.css" integrity="sha384-NvKbDTEnL+A8F/AA5Tc5kmMLSJHUO868P+lDtTpJIeQdGYaUIuLr4lVGOEA1OcMy" crossorigin="anonymous">
+    <link rel="stylesheet" href=" https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.6.0/css/fontawesome.min.css ">
+    <link rel="stylesheet" href="/admissions/apply/landing/style.css">
+    <link rel="stylesheet" href="/admissions/apply/assets/css/icons.css">
+
+
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <!-- Logo -->
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="/admissions/apply/assets/images/logo/knustadmissions-logo-white.png" alt="logo" width="" height="50" class="me-2">
+            </a>
+
+            <!-- Mobile Sidebar Toggle Button -->
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Desktop Menu -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#programmes">Programmes</a></li>
+                    <li class="nav-item"><a target="_blank" class="nav-link" href="https://apps.knust.edu.gh/admissions/check">Check Status</a></li>
+                    <li class="nav-item"><a target="_blank" class="nav-link" href="https://helpdesk.knust.edu.gh/kb/index.php">FAQs</a></li>
+                    <li data-bs-toggle="modal" data-bs-target="#exampleModal" class="nav-item"><a class="nav-link" href="#">Contact us</a></li>
+                    <li class="nav-item"><a class="nav-link  app  px-3 mx-2" href="/admissions/apply/Account/Register">Purchase E-Voucher &amp; Apply</a></li>
+                    <li class="nav-item"><a class="nav-link  log text-black px-3" href="/admissions/apply/Account/SignIn">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar (Mobile Menu) -->
+    <div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="/admissions/apply/assets/images/logo/knustadmissions-logo-white.png" alt="logo" width="" height="50" class="me-2">
+            </a>
+            <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav">
+                <li aria-label="Close" data-bs-dismiss="offcanvas" class="nav-item "><a class="nav-link active" href="#">Home</a></li>
+                <li aria-label="Close" data-bs-dismiss="offcanvas" class="nav-item "><a class="nav-link" href="#programmes">Programmes</a></li>
+                <li class="nav-item"><a target="_blank" class="nav-link" href="https://apps.knust.edu.gh/admissions/check">Check Status</a></li>
+                <li aria-label="Close" data-bs-dismiss="offcanvas" class="nav-item "><a target="_blank" class="nav-link" href="https://helpdesk.knust.edu.gh/kb/index.php">FAQs</a></li>
+              
+                <li data-bs-toggle="modal" data-bs-target="#exampleModal" aria-label="Close" class="nav-item"><a class="nav-link" href="#contactModal">Contact us</a></li>
+                <div class="d-flex align-items-start flex-column gap-2">
+                    <li class="nav-item w-100"><a class="nav-link btn  app  px-3  w-100" href="/admissions/apply/Account/Register">Purchase E-Voucher &amp; Apply</a></li>
+                    <li class="nav-item w-100"><a class="nav-link btn  log text-black px-3 w-100" href="/admissions/apply/Account/SignIn">Login</a></li>
+                </div>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Contact Information Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contactModalLabel">Contact Us</h5>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4 class="fs-6">Do you have urgent questions to ask? Contact us through the following:</h4>
+                    <div class="contact-grid">
+                        <div class="column">
+                            <div class="card p-4 ">
+                                <h5 class="fs-6">Undergraduate Admissions:</h5>
+                                <ul class="list-unstyled">
+                                    <li><a href="tel:+233 24 013 0946" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bx-phone text-primary"></i> +233 24 013 0946</a></li>
+                                    <li><a href="tel:+233 50 048 2807" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bx-phone text-primary"></i> +233 50 048 2807</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="card p-4 ">
+                                <h5 class="fs-6">Graduate School:</h5>
+                                <ul class="list-unstyled">
+                                    <li><a href="tel:+233 20 133 2812" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bx-phone text-primary"></i>  +233 20 133 2812</a></li>
+                                    <li><a href="tel:+233 20 133 2816" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bx-phone text-primary"></i>  +233 20 133 2816</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="card p-4 ">
+                                <h5 class="fs-6">Institute of Distance Learning:</h5>
+                                <ul class="list-unstyled">
+                                    <li><a href="tel:+233 54 020 6262" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bx-phone text-primary"></i>  +233 54 020 6262</a></li>
+                                    <li><a href="tel:+233 50 048 2885" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bx-phone text-primary"></i>  +233 50 048 2885</a></li>
+                                    <li><a href="tel:+233 24 727 4661" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bx-phone text-primary"></i>  +233 24 727 4661</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="card p-4 ">
+                                <h5 class="fs-6">Admissions Helpdesk:</h5>
+                                <ul class="list-unstyled">
+                                    <li><a href="https://api.whatsapp.com/send?phone=233240130946" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bxl-whatsapp text-primary"></i>  +233 24 013 0946</a></li>
+                                    <li><a href="https://t.me/knustadmissions" class="d-flex align-items-center text-black list-unstyled text-decoration-none gap-2"><i class="bx bxl-telegram text-primary"></i> +233 50 048 2807</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+  </div>
+</div>
+    <!-- HERO -->
+    <section class="hero-section text-white text-center ">
+        <div class="overlay"></div>
+        <div class="container">
+            <div class="hero-content ">
+                <h1 class="text-start text-primary">Welcome to KNUST Admission Portal</h1>
+                <p class="text-start">
+                    Begin your academic journey through our sciences and arts programmes.
+                </p>
+                <div class="btn-group">
+                    <a class="apply btn" href="/admissions/apply/Account/Register">Purchase E-Voucher &amp; Apply</a>
+                    <a class="login btn " href="/admissions/apply/Account/SignIn">Login</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- HOW TO Mobile -->
+    <section class="py-5 px-3 bg-light d-lg-none">
+        <div class="container">
+            <h2 class="text-center fw-bold mb-4">How to use the Admissions Portal</h2>
+
+            <div class="row d-lg-none">
+                <!-- Mobile View -->
+                <div class="col-12 text-center mb-4">
+                    <div class="p-3 shadow-sm rounded bg-white">
+                        <div class="mb-3 d-flex align-items-center justify-content-center">
+                           
+                                 <i class="bi bi-person-plus"></i>
+                       
+                        </div>
+                        <h5 class="fw-bold">Sign up and create Account</h5>
+                       <p class="lh-100">
+                        Register with a valid and active
+                        email address.
+                        </p>
+                          <p class="text-start">
+                      A verification link will be sent to the email address you provide 
+                      </p>
+                    
+                 
+                    </div>
+                </div>
+
+                <div class="col-12 text-center mb-4">
+                    <div class="p-3 shadow-sm rounded bg-white">
+                        <div class="mb-3 d-flex align-items-center justify-content-center">
+                                <i class="bi bi-mortarboard"></i>
+                        </div>
+                        <h5 class="fw-bold">Select your student Category</h5>
+                        <p class="text-start"><span class="fw-semibold">Ghanaian students:</span> Purchase
+                            vouchers online
+                            or verify vouchers purchased from approved outlets.
+                        </p>
+                        <p class="text-start"><span class="fw-semibold">International students:</span>
+                            Purchase vouchers online and proceed.</p>
+                     
+                    </div>
+                </div>
+
+                <div class="col-12 text-center">
+                    <div class="p-3 shadow-sm rounded bg-white">
+                        <div class="mb-3 d-flex align-items-center justify-content-center">
+                           
+                                <i class="bi bi-send-fill"></i>
+                         
+                        </div>
+                        <h5 class="fw-bold">Complete and submit Application</h5>
+                        <p class="text-start">
+                            Fill in the required details and
+                            submit your application.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- HOW TO APPLY -->
+    <div class="container to-apply d-none  d-lg-block">
+        <div class="admissions-card rounded-4 shadow-lg  py-4">
+            <h2 class="fw-bold text-start mb-5">How to use the Admissions Portal</h2>
+            <div class="row mt-4 ">
+                <!-- Step 1 -->
+                <div class="col-md-4 text-start px-3">
+                    <div class="icon-container">
+                        <i class="bi bi-person-plus"></i>
+                        <h5 class="fw-bold mt-2 text-muted">Sign up and create <br> Account</h5>
+                    </div>
+
+                    <p class="lh-100">
+                        Register with a valid and active
+                        email address.
+                    </p>
+                      <p class="text-start"></p>
+                      A verification link will be sent to the email address you provide 
+                    <p></p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="col-md-4 text-start px-3">
+                    <div class="icon-container">
+                        <i class="bi bi-mortarboard"></i>
+                        <h5 class="fw-bold mt-2 text-muted">Select your student <br> category</h5>
+                    </div>
+
+                    <p class="lh-100">
+                    <span class="fw-semibold">Ghanaian students:</span> Purchase
+                        vouchers online
+                        or verify vouchers purchased from approved outlets.
+                    </p>
+                    <span class="fw-semibold">International students:</span>
+                        Purchase vouchers online and proceed.
+                    
+                </div>
+
+                <!-- Step 3 -->
+                <div class="col-md-4 text-start ">
+                    <div class="icon-container">
+                        <i class="bi bi-send-fill"></i>
+                        <h5 class="fw-bold mt-2 text-muted">Complete and submit Application</h5>
+                    </div>
+
+                    <p class="lh-100">
+                        Fill in the required details and
+                        submit your application.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- VIDEO-TEXT SECTION -->
+    <!-- Bootstrap Modal for Video -->
+    <div class="modal fade" id="videoModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="videoModalLabel">Admission Portal Walkthrough</h5>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <iframe id="videoIframe" width="100%" height="900px" frameborder="0" allowfullscreen=""></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Virtual Tour Section -->
+    <div class="rounded-3 w-100 virtual-tour-container my-5">
+        <div class="container">
+            <div class="row d-flex tour-content justify-content-between align-items-center">
+                <!-- Left Section with Clickable Thumbnail -->
+                <div class="col-md-6 px-0 h-100 position-relative">
+                    <img id="videoThumbnail" src="/admissions/apply/landing/img/thumbnail.jpg" class="d-block w-100 rounded-4" alt="Campus Tour" style="object-fit: cover; cursor: pointer;">
+                    <img id="playButton" src="/admissions/apply/landing/img/play.png" class="position-absolute top-50 start-50 translate-middle" style="width: 80px; cursor: pointer; animation: zoom 1.5s infinite alternate;" alt="Play Button">
+                </div>
+                <!-- Right Section with Play Button -->
+                <div class="col-md-6 h-100 px-4">
+                    <h2 class="text-primary fw-bold">Admission Portal Walkthrough</h2>
+                    <hr class="announcement-line">
+
+                    <p class="text-neutral">
+                        This video helps applicants navigate their way through the new admissions system. Click on the play button to watch.
+                    </p>
+                    <button class="btn btn-primary text-white fw-bold" id="playVideo" style="max-width: max-content">
+                        Watch <i class="bx bx-sm bx-play-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Modal Handling -->
+    <script>
+        document.getElementById("videoThumbnail").addEventListener("click", openModal);
+        document.getElementById("playButton").addEventListener("click", openModal);
+        document.getElementById("playVideo").addEventListener("click", openModal);
+
+        function openModal() {
+            let videoUrl = "https://www.youtube.com/embed/CoLizCFl2N4?autoplay=1";
+            document.getElementById("videoIframe").src = videoUrl;
+            let videoModal = new bootstrap.Modal(document.getElementById("videoModal"));
+            videoModal.show();
+        }
+
+        document.getElementById("videoModal").addEventListener("hidden.bs.modal", function () {
+            document.getElementById("videoIframe").src = ""; // Stop video when modal closes
+        });
+    </script>
+
+
+
+    <!-- ANNOUNCEMENT -->
+    <div class="container mt-4">
+         <h2 class="text-primary fw-bold">Announcement</h2>
+        <hr class="announcement-line"> 
+
+         <div class="container mt-5 mx-auto" style="z-index: 10; position: relative">
+            <div class="row">
+                <div class="col-md-4 col-sm-12">
+                    <a target="_blank" href="/admissions/apply/landing/docs/SMS-SOD-Entrance-Examination-Notice-2025.pdf" class="text-decoration-none">
+                        <div class="card custom-card">
+                            <div class="pdf-preview">
+                                <img src="/admissions/apply/landing/img/PDF_file_icon.svg.png" alt="" style="height: 64px;">
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text"> ENTRY EXAMINATION AND INTERVIEWS FOR ADMISSION INTO THE SCHOOL OF MEDICAL SCIENCES AND SCHOOL OF DENTISTRY FOR THE 2025/2026 ACADEMIC YEAR</p>
+
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4 col-sm-12">
+                    <a target="_blank" href="/admissions/apply/landing/docs/SMS-AND-SOD-INTERVIEW-APPLICATION-FORM-FOR-2025-2026-ACADEMIC-YEAR.pdf" class="text-decoration-none">
+                        <div class="card custom-card">
+                            <div class="pdf-preview">
+                                <img src="/admissions/apply/landing/img/PDF_file_icon.svg.png" alt="" style="height: 64px;">
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">SMS-SOD Interview Application Form 2025/2026 Academic Year</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4 col-sm-12 h-100 ">
+                    <a target="_blank" href="https://apps.knust.edu.gh/admissions/apply/check/GEMP_Shortlisted_Applicants_Notice.pdf" class="text-decoration-none">
+                        <div class="card custom-card">
+                        <div class="pdf-preview">
+                            <img src="/admissions/apply/landing/img/PDF_file_icon.svg.png" alt="" style="height: 64px;">
+                        </div>
+                        <div class="card-body">
+                                <p class="card-text">2024/2025 NOTICE TO SHORTLISTED APPLICANTS FOR MEDICINE AND DENTISTRY (GRADUATE ENTRY – BSc. HUMAN BIOLOGY, MBChB ACCESS COURSE)</p>
+
+                            </div>
+                    </div>
+                            </a>
+                </div>
+                
+
+            </div>
+        </div> 
+
+
+        <!-- LAST SECTION -->
+        <!-- Background Wrapper (Covers Both Sections) -->
+        <div class="background-wrapper" id="programmes">
+            <!-- Programmes Section -->
+            <div class=" text-white w-100">
+                <div class=" container programmes-card py-4 px-5 mb-4">
+                    <h2 class="fw-bold ">Available Programmes</h2>
+                    <hr class="underline mt-2">
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <p>
+                                Explore a diverse range of programmes designed to equip
+                                you
+                                with the skills and knowledge needed for success. Our available programmes cover various
+                                fields, ensuring there’s something for everyone. 
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p>
+                                Whether you're looking for professional
+                                development, academic advancement, or specialized training, we have the right programme
+                                for you. Browse through our offerings and take the next step toward your goals.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons Section -->
+            <div class="buttons-container">
+                <div class="container">
+                    <div class="row mx-0">
+                        <div class="col-md-4 text-center">
+                            <button class="btn levels p-3 btn-dark w-100">
+                                Undergraduate Programmes
+                               
+                            </button>
+
+                            <div class="mt-4">
+                                <ul class="d-flex gap-2 align-items-start flex-column">
+                                    <li class="list-unstyled d-flex align-items-center gap-2">
+                                        <div class="flex-shrink-0 me-2">
+                                            <div class="avatar-xs icon-effect">
+                                                <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                    <i class="ri-check-fill"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a target="_blank" class="text-decoration-none text-primary" href="https://webapps.knust.edu.gh/check/forms/Admission_Requirement.pdf">Regular</a></li>
+                                    <li class="list-unstyled d-flex align-items-center gap-2">
+                                        <div class="flex-shrink-0 me-2">
+                                            <div class="avatar-xs icon-effect">
+                                                <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                    <i class="ri-check-fill"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a target="_blank" class="text-decoration-none text-primary" href="https://idl.knust.edu.gh/programmes/topup-programmes">Distance Learning</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <button class="btn levels p-3 btn-secondary w-100">
+                                Postgraduate Programmes
+                               
+                            </button>
+                            <div class="mt-4">
+                                
+                                <ul class="d-flex gap-2 align-items-start flex-column">
+                                    
+                                    <li class="list-unstyled d-flex align-items-center gap-2 ">
+                                        <div class="flex-shrink-0 me-2">
+                                            <div class="avatar-xs icon-effect">
+                                                <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                    <i class="ri-check-fill"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a target="_blank" class="text-decoration-none text-primary" href="https://webapps.knust.edu.gh/check/forms/POSTGRADUATE_ADMISSIONS.pdf">Regular</a>
+                                    </li>
+                                    <li class="list-unstyled d-flex align-items-center gap-2 ">
+                                        <div class="flex-shrink-0 me-2">
+                                            <div class="avatar-xs icon-effect">
+                                                <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                    <i class="ri-check-fill"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a target="_blank" class="text-decoration-none text-primary" href="https://idl.knust.edu.gh/programmes/postgraduate-programmes">Distance Learning</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <button class="btn levels p-3 btn-light w-100">
+                                Diploma Programmes
+                               
+                            </button>
+                            
+                            <div class="mt-4">
+                                <ul class="d-flex gap-2 align-items-start flex-column">
+                                    <li class="list-unstyled d-flex align-items-center gap-2">
+                                        <div class="flex-shrink-0 me-2">
+                                            <div class="avatar-xs icon-effect">
+                                                <div class="avatar-title bg-transparent text-success rounded-circle h2">
+                                                    <i class="ri-check-fill"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a target="_blank" class="text-decoration-none text-primary" href="https://idl.knust.edu.gh/programmes/diploma-programmes">See Programmes</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- LASS -->
+        <div class="rounded-3 w-100 virtual-tour-container my-5">
+            <div class="container ">
+                <div class="row d-flex tour-content justify-content-between align-items-center ">
+                    <!-- Left Text Section -->
+                    <div class="col-md-6 h-100 px-4">
+                        <h2 class="text-primary fw-bold">Virtual Campus Tour</h2>
+                        <hr class="announcement-line">
+
+                        <p class="text-neutral">
+                            Discover the vibrant life, stunning architecture, and serene landscapes of Kwame Nkrumah University of Science and Technology. Take a virtual stroll through our lecture halls, libraries, halls of residence, and iconic landmarks — all from the comfort of your screen.
+                        </p>
+                        <a target="_blank" href="https://virtualtour.knust.edu.gh/" class="btn btn-primary text-white fw-bold" style="max-width: max-content">Take a tour
+                            <i class="bx bx-sm bx-play-circle"></i>
+                        </a>
+                    </div>
+
+                    <!-- Right Image Section -->
+                    <div class="col-md-6 px-0 h-100 ">
+                        <img src="/admissions/apply/landing/img/tour-img-4.jpg" class="d-block w-100  rounded-4" alt="Campus Tour" style="object-fit: cover">
+                        
+                       
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+      
+        
+
+    </div>
+
+    <!-- Footer -->
+
+    <footer class="custom-footer bg-dark py-5 position-relative">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3 mt-4">
+                    <div>
+                        <div>
+                            <img src="/admissions/apply/assets/images/logo/knustadmissions-logo-white.png" alt="logo light" height="50">
+                        </div>
+                        <div class="mt-4 fs-13">
+                            <ul class="list-inline mb-0 footer-social-link">
+                                <li class="list-inline-item">
+
+                                    <a target="_blank" href="https://www.facebook.com/KNUSTksi" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-facebook-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+
+                                    <a target="_blank" href="https://twitter.com/KNUSTKumasi" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-twitter-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+
+                                    <a target="_blank" href="https://www.instagram.com/knustkumasi/" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-instagram-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="list-inline-item">
+
+                                    <a target="_blank" href="https://www.youtube.com/channel/UCcTkk-7AgMB7MmEn__WoLaw" class="avatar-xs d-block">
+                                        <div class="avatar-title rounded-circle">
+                                            <i class="ri-youtube-fill"></i>
+                                        </div>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-9 ms-lg-auto">
+                    <div class="row">
+                        <div class="col-sm-3 mt-4">
+                            <h5 class="text-white mb-0 fs-5" style="font-size: 1rem !important">Undergraduate-Ghanaian</h5>
+                            <div class="text-muted mt-3">
+                                <ul class="list-unstyled ff-secondary footer-list">
+
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://www.knust.edu.gh/admissions/prospective/applying">General
+                                        Information for Applicants</a></li>
+
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://webapps.knust.edu.gh/check/forms/Admission_Requirement.pdf">Undergraduate Programmes</a></li>
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://webapps.knust.edu.gh/check/forms/Admission_Requirement.pdf">Cut-off Points</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-sm-3 mt-4">
+                            <h5 class="text-white mb-0 fs-5" style="font-size: 1rem !important">Postgraduate-Ghanaian</h5>
+                            <div class="text-muted mt-3">
+                                <ul class="list-unstyled ff-secondary footer-list">
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://www.knust.edu.gh/admissions/prospective/applying">General
+                                        Information for Applicants</a></li>
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://webapps.knust.edu.gh/check/forms/POSTGRADUATE_ADMISSIONS.pdf">Postgraduate
+                                        Programmes</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-sm-3 mt-4">
+                            <h5 class="text-white mb-0 fs-5" style="font-size: 1rem !important">Distance Learning</h5>
+                            <div class="text-muted mt-3">
+                                <ul class="list-unstyled ff-secondary footer-list">
+                                    <li><a class="text-decoration-none fs-6" style="font-size: 0.85rem !important;" href="https://www.knust.edu.gh/announcements/general/sale-application-forms-20192020-academic-year-idl-postgraduate-undergraduate">General
+                                        Information for Applicants</a></li>
+
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-sm-3 mt-4">
+                            <h5 class="text-white mb-0 fs-5" style="font-size: 1rem !important">International Applicant</h5>
+                            <div class="text-muted mt-3">
+                                <ul class="list-unstyled ff-secondary footer-list">
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://www.knust.edu.gh/admissions/prospective/applying">General
+                                        Information for Applicants</a></li>
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://webapps.knust.edu.gh/check/forms/Admission_Requirement.pdf">Undergraduate
+                                        Programmes</a></li>
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://webapps.knust.edu.gh/check/forms/POSTGRADUATE_ADMISSIONS.pdf">Postgraduate
+                                        Programmes</a></li>
+                                    <li><a style="font-size: 0.85rem !important;" class="text-decoration-none fs-6" href="https://www.knust.edu.gh/students/housing">Accommodation for
+                                        Applicants</a></li>
+
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row text-center text-sm-start align-items-center mt-5">
+                <div class="col-sm-6">
+                    <div>
+                        <p style="font-size: 0.85rem !important;" class=" fs-6 copy-rights mb-0">
+                            <script> document.write(new Date().getFullYear()) </script>2025 © Kwame Nkrumah University
+                            of Science and Technology, Kumasi, Ghana.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end mt-3 mt-sm-0">
+                        <p style="font-size: 0.85rem !important;" class=" fs-6 copy-rights mb-0"> Developed by University Information Technology Services.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+        var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+        (function(){
+        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+        s1.async=true;
+        s1.src='https://embed.tawk.to/680a62464a25191909a0433f/1ipk8vpoj';
+        s1.charset='UTF-8';
+        s1.setAttribute('crossorigin','*');
+        s0.parentNode.insertBefore(s1,s0);
+        })();
+    </script>
+    <!--End of Tawk.to Script-->
+    
+
+</body></html>
