@@ -20,6 +20,12 @@ interface Course {
   score: string
   creditHours: string
   semester: string
+  /**
+   * True when this row was populated by TranscriptUpload (not typed manually).
+   * Used so that re-extracting a transcript replaces the prior auto-extracted
+   * rows without clobbering manually-typed ones.
+   */
+  _fromTranscript?: boolean
 }
 
 const SEMESTERS = [
@@ -237,7 +243,7 @@ export default function UniversityConvertPage() {
   // When every course came from the transcript upload, the embedded preview in
   // TranscriptUpload IS the editable course list — no need to duplicate it below.
   const allCoursesFromTranscript =
-    courses.length > 0 && courses.every((c) => (c as any)._fromTranscript)
+    courses.length > 0 && courses.every((c) => c._fromTranscript)
 
   return (
     <AppShell step={1} totalSteps={2} stepLabel="Courses">
@@ -319,14 +325,13 @@ export default function UniversityConvertPage() {
                 onCoursesExtracted={(extracted) => {
                   setCourses((prev) => {
                     // Keep anything the user added manually (no _fromTranscript flag)
-                    const manual = prev.filter((c) => !(c as any)._fromTranscript)
+                    const manual = prev.filter((c) => !c._fromTranscript)
                     const mapped: Course[] = extracted.map((c, i) => ({
                       id: `tx-${i}`,
                       name: c.name,
                       score: c.score?.toString() || c.grade || '',
                       creditHours: c.credits.toString(),
                       semester: c.semester || 'Semester 1',
-                      // @ts-expect-error custom tag so we can dedupe on subsequent edits
                       _fromTranscript: true,
                     }))
                     return [...manual, ...mapped]
