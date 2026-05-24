@@ -4,3 +4,12 @@ out
 .DS_Store
 *.log
 .env*.local
+
+# Env files with secrets (Anthropic, Paystack, JWT, DB password, etc.)
+.env
+backend/.env
+.env.local
+backend/.env.local
+
+# Claude Code session data
+.claude/

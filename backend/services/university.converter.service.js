@@ -1,9 +1,36 @@
 const gradeConfigService = require('./gradeConversionConfig.service')
 const { pool } = require('../config/database')
+const ghanaGrading = require('./ghanaGrading.service')
 
 let GRADING_SYSTEMS_CACHE = null
 let CACHE_TIMESTAMP = null
 const CACHE_TTL = 5 * 60 * 1000
+
+/**
+ * Scholaro/WES table — for US credential evaluation only. For Ghana internal CGPA
+ * (KNUST/UG/UCC/UEW), use the ghanaGrading service which has the correct per-university tables.
+ */
+const SCHOLARO_GHANA_BOUNDARIES = ghanaGrading.SCHOLARO_BANDS
+
+function ghanaPercentageToUSGrade(percentage) {
+  const p = Number(percentage)
+  if (Number.isNaN(p)) return null
+  const row = SCHOLARO_GHANA_BOUNDARIES.find((b) => p >= b.min && p <= b.max)
+  return row ? row.letter : null
+}
+
+function usGradeToPoints(letter) {
+  if (!letter) return 0.0
+  const row = SCHOLARO_GHANA_BOUNDARIES.find((b) => b.letter === letter)
+  return row ? row.points : 0.0
+}
+
+function scholaroPercentageToPoints(percentage) {
+  const p = Number(percentage)
+  if (Number.isNaN(p)) return null
+  const row = SCHOLARO_GHANA_BOUNDARIES.find((b) => p >= b.min && p <= b.max)
+  return row ? row.points : null
+}
 
 async function getGradingSystems() {
   const now = Date.now()
@@ -113,76 +140,132 @@ function validateScore(score, systemId) {
   return numScore
 }
 
-function calculateWeightedAverage(courses) {
+/**
+ * Weighted average. Accepts courses with score (percentage 0-100) OR grade (letter).
+ * If only a letter is given, uses the source university's band midpoint as the
+ * estimated percentage (UG B+ ≈ 77.5%). Set sourceUniversity to KNUST/UG/UCC/UEW
+ * for accurate letter-to-percentage mapping.
+ */
+function calculateWeightedAverage(courses, sourceUniversity = null) {
   if (!courses || courses.length === 0) {
     throw new Error('Must provide at least one course')
   }
-  
+
   let totalWeightedScore = 0
   let totalCredits = 0
-  
+
   for (const course of courses) {
-    const score = parseFloat(course.score)
     const credits = parseFloat(course.creditHours)
-    
-    if (isNaN(score)) {
-      throw new Error(`Invalid score for course: ${course.name}`)
-    }
-    
     if (isNaN(credits) || credits <= 0) {
       throw new Error(`Invalid credit hours for course: ${course.name}`)
     }
-    
+
+    // Try numeric score first
+    const rawScore = parseFloat(course.score)
+    let score = rawScore
+    if (isNaN(rawScore) || rawScore < 0 || rawScore > 100) {
+      // Score is missing or not a valid percentage — fall back to letter grade.
+      // The Score column on a UG transcript is often empty, with grade in a separate column.
+      const letter = course.grade || (typeof course.score === 'string' ? course.score : null)
+      if (!letter) {
+        throw new Error(`Invalid score for course: ${course.name}`)
+      }
+      if (!sourceUniversity || !ghanaGrading.GHANA_UNIVERSITIES[sourceUniversity]) {
+        throw new Error(
+          `Course "${course.name}" has a letter grade "${letter}" but no sourceUniversity ` +
+            `was provided to map it to a percentage.`
+        )
+      }
+      // Let the resolver's specific error bubble up — it tells the user exactly
+      // which letter/score is invalid for their university's scheme.
+      const resolved = ghanaGrading.resolveCourseBand(sourceUniversity, {
+        name: course.name,
+        score: course.score,
+        grade: course.grade,
+      })
+      score = resolved.score
+    }
+
     totalWeightedScore += score * credits
     totalCredits += credits
   }
-  
+
   if (totalCredits === 0) {
     throw new Error('Total credits must be greater than 0')
   }
-  
+
   const weightedAverage = totalWeightedScore / totalCredits
   return Math.round(weightedAverage * 100) / 100
 }
 
-async function calculateScholaroGPA(courses, systemId) {
+/**
+ * WES / Scholaro course-by-course GPA: convert each course's percentage to a US letter grade,
+ * then to GPA points, then weight by credit hours. This is the recommended method for
+ * Ghana CWA → USA GPA — do NOT linear-scale the overall percentage.
+ *
+ * Tries DB-backed boundaries first; falls back to hardcoded SCHOLARO_GHANA_BOUNDARIES
+ * so the service is correct even without a seeded grade_boundaries table.
+ */
+async function calculateScholaroGPA(courses, systemId, sourceUniversity = 'UG') {
   if (!courses || courses.length === 0) {
     throw new Error('Must provide at least one course')
   }
-  
+
   if (systemId !== 'ghana_cwa') {
     return null
   }
-  
+
   let totalPoints = 0
   let totalCredits = 0
-  
+
   for (const course of courses) {
-    const percentage = parseFloat(course.score)
     const credits = parseFloat(course.creditHours)
-    
-    if (isNaN(percentage)) {
-      throw new Error(`Invalid score for course: ${course.name}`)
-    }
-    
     if (isNaN(credits) || credits <= 0) {
       throw new Error(`Invalid credit hours for course: ${course.name}`)
     }
-    
-    const gradeInfo = await scoreToLetterGrade(systemId, percentage)
-    
-    if (!gradeInfo) {
-      throw new Error(`Could not convert score ${percentage} for system ${systemId}`)
+
+    // Resolve to a percentage — accepts numeric score OR letter grade.
+    // For letter-only rows, uses the source uni's band midpoint as the estimated %.
+    let percentage
+    try {
+      const resolved = ghanaGrading.resolveCourseBand(sourceUniversity, {
+        name: course.name,
+        score: course.score,
+        grade: course.grade,
+      })
+      percentage = resolved.score
+    } catch (e) {
+      throw new Error(`Invalid score for course: ${course.name} — ${e.message}`)
     }
-    
-    totalPoints += gradeInfo.points * credits
+
+    let points = null
+
+    // Try DB first (admin can override defaults)
+    try {
+      const dbGrade = await scoreToLetterGrade(systemId, percentage)
+      if (dbGrade && typeof dbGrade.points === 'number') {
+        points = dbGrade.points
+      }
+    } catch (_) {
+      // DB unavailable — fall through to hardcoded boundaries
+    }
+
+    if (points === null) {
+      points = scholaroPercentageToPoints(percentage)
+    }
+
+    if (points === null) {
+      throw new Error(`Could not classify score ${percentage} for ${course.name}`)
+    }
+
+    totalPoints += points * credits
     totalCredits += credits
   }
-  
+
   if (totalCredits === 0) {
     throw new Error('Total credits must be greater than 0')
   }
-  
+
   const gpa = totalPoints / totalCredits
   return Math.round(gpa * 100) / 100
 }
@@ -256,64 +339,104 @@ function getDegreeClassification(systemId, score) {
 
 async function convertUniversityGrades(data) {
   try {
-    const { sourceSystem, courses, targetSystem } = data
-    
+    const { sourceSystem, courses, targetSystem, sourceUniversity } = data
+
     if (!sourceSystem) {
       throw new Error('Source grading system is required')
     }
-    
+
     if (!GRADING_SYSTEMS[sourceSystem]) {
       throw new Error(`Invalid source grading system: ${sourceSystem}`)
     }
-    
+
     if (!courses || courses.length === 0) {
       throw new Error('At least one course is required')
     }
-    
+
     if (courses.length > 100) {
       throw new Error('Maximum 100 courses allowed per conversion')
     }
-    
+
     const validTargetSystems = ['usa_gpa', 'uk_percentage']
     const finalTargetSystem = targetSystem || 'usa_gpa'
-    
+
     if (!validTargetSystems.includes(finalTargetSystem)) {
       throw new Error('Target system must be either usa_gpa or uk_percentage')
     }
-    
-    const weightedAverage = calculateWeightedAverage(courses)
-    
+
+    // Determine source uni FIRST so calculateWeightedAverage can map letter grades
+    // to estimated percentages using the right table.
+    const resolvedUni = resolveSourceUniversity(sourceSystem, sourceUniversity)
+
+    const weightedAverage = calculateWeightedAverage(courses, resolvedUni)
+
     let usaGpa, ukPercentage
-    
-    if (sourceSystem === 'ghana_cwa') {
-      usaGpa = await calculateScholaroGPA(courses, sourceSystem)
+    let ghanaCgpa = null          // internal university CGPA (UG/UCC/UEW only — null for KNUST)
+    let ghanaClassification = null // First Class / 2nd Upper / ... per source uni's rule
+    const warnings = []
+
+    // For Ghana sources we ALWAYS go course-by-course (more accurate than a single overall number).
+    // ghana_cwa = student entered percentage scores; ghana_gpa = student entered letter grades
+    // mapped to the source uni's 4.0 scale. Both paths compute the same outputs from the same
+    // raw course rows — the only difference is which input column the user filled in.
+    if (sourceSystem === 'ghana_cwa' || sourceSystem === 'ghana_gpa') {
+      usaGpa = await calculateScholaroGPA(courses, 'ghana_cwa', resolvedUni || 'UG')
       ukPercentage = weightedAverage
+
+      // Internal Ghana classification depends on which university the student attended.
+      if (resolvedUni && ghanaGrading.GHANA_UNIVERSITIES[resolvedUni]) {
+        const uni = ghanaGrading.GHANA_UNIVERSITIES[resolvedUni]
+        if (uni.scaleType === 'CGPA') {
+          ghanaCgpa = ghanaGrading.calculateGhanaCGPA(courses, resolvedUni)
+          ghanaClassification = ghanaGrading.cgpaToClassification(resolvedUni, ghanaCgpa)
+        } else {
+          // KNUST: classify by CWA directly
+          ghanaClassification = ghanaGrading.cwaToClassification(resolvedUni, weightedAverage)
+          warnings.push(
+            'KNUST does not publish an official 4.0 CGPA. The USA GPA shown is the WES/Scholaro ' +
+              'course-by-course estimate (used by US grad schools) — do not treat it as KNUST\'s own GPA.'
+          )
+        }
+      } else {
+        warnings.push(
+          'No source university specified — using WES/Scholaro mapping. Pass sourceUniversity ' +
+            '(KNUST | UG | UCC | UEW) for the correct internal Ghana classification.'
+        )
+      }
     } else {
       const conversion = convertGrade(sourceSystem, weightedAverage)
       usaGpa = conversion.usaGpa
       ukPercentage = conversion.ukPercentage
     }
-    
-    const degreeClassification = getDegreeClassification(sourceSystem, weightedAverage)
-    
-    const targetScore = finalTargetSystem === 'usa_gpa' 
-      ? usaGpa 
+
+    // Legacy: keep the broad-strokes degree classification for non-Ghana cases.
+    // For Ghana sources, prefer the university-specific classification.
+    const degreeClassification = ghanaClassification
+      ? { sourceClassification: ghanaClassification, sourceUniversity: resolvedUni }
+      : getDegreeClassification(sourceSystem, weightedAverage)
+
+    const targetScore = finalTargetSystem === 'usa_gpa'
+      ? usaGpa
       : ukPercentage
-    
+
     return {
       success: true,
       data: {
         sourceSystem: sourceSystem,
+        sourceUniversity: resolvedUni,
         sourceScore: weightedAverage,
         weightedAverage: weightedAverage,
-        usaGpa: usaGpa,
+        ghanaCgpa,            // internal university CGPA (null for KNUST)
+        ghanaClassification,  // 'First Class' / 'Second Class Upper' / etc.
+        usaGpa: usaGpa,       // WES/Scholaro 4.0 GPA (for US grad apps)
         ukPercentage: ukPercentage,
         targetSystem: finalTargetSystem,
         targetScore: targetScore,
         degreeClassification: degreeClassification,
         totalCourses: courses.length,
         totalCredits: courses.reduce((sum, c) => sum + parseFloat(c.creditHours), 0),
-        courses: courses
+        courses: courses,
+        warnings,
       }
     }
   } catch (error) {
@@ -322,6 +445,21 @@ async function convertUniversityGrades(data) {
       error: error.message
     }
   }
+}
+
+/**
+ * Pick the correct Ghana grading table:
+ *   - explicit sourceUniversity wins (validated against the registry)
+ *   - else infer from sourceSystem (ghana_cwa → KNUST default; ghana_gpa → UG default)
+ *   - else null (caller will use generic fallback)
+ */
+function resolveSourceUniversity(sourceSystem, sourceUniversity) {
+  if (sourceUniversity && ghanaGrading.GHANA_UNIVERSITIES[sourceUniversity]) {
+    return sourceUniversity
+  }
+  if (sourceSystem === 'ghana_cwa') return 'KNUST'
+  if (sourceSystem === 'ghana_gpa') return 'UG'
+  return null
 }
 
 async function saveConversion(userId, conversionData) {

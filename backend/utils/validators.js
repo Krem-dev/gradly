@@ -4,7 +4,7 @@ function validateEmail(email) {
 }
 
 function validatePassword(password) {
-  return password && password.length >= 6
+  return typeof password === 'string' && password.length >= 8
 }
 
 function validateGrades(grades) {

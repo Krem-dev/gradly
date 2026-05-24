@@ -151,28 +151,49 @@ export const api = {
   },
 
   universityConverter: {
-    convert: async (sourceSystem: string, courses: any[], targetSystem: string) => {
+    convert: async (
+      sourceSystem: string,
+      courses: any[],
+      targetSystem: string,
+      userId?: number | string,
+      sourceUniversity?: string
+    ) => {
+      const uid = userId ?? (typeof window !== 'undefined' ? localStorage.getItem('userId') : null)
       const response = await fetch(`${API_BASE_URL}/university-converter/convert`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceSystem, courses, targetSystem })
+        headers: {
+          'Content-Type': 'application/json',
+          ...(uid ? { 'x-user-id': String(uid) } : {}),
+        },
+        body: JSON.stringify({
+          sourceSystem,
+          sourceUniversity, // KNUST | UG | UCC | UEW — backend uses to pick the right classification table
+          courses,
+          targetSystem,
+          userId: uid,
+        }),
       })
       return response.json() as Promise<ApiResponse<{
         sourceSystem: string
+        sourceUniversity: string | null
         sourceScore: number
         weightedAverage: number
-        usaGpa: number
+        ghanaCgpa: number | null            // internal university CGPA (null for KNUST)
+        ghanaClassification: string | null  // First Class / Second Class Upper / ...
+        usaGpa: number                      // WES/Scholaro 4.0 GPA for US grad apps
         ukPercentage: number
         targetSystem: string
         targetScore: number
         degreeClassification: {
           sourceClassification: string
-          usaEquivalent: string
-          ukEquivalent: string
+          sourceUniversity?: string
+          usaEquivalent?: string
+          ukEquivalent?: string
         }
         totalCourses: number
         totalCredits: number
         courses: any[]
+        warnings: string[]
       }>>
     },
 
@@ -217,10 +238,14 @@ export const api = {
       }>>>
     },
 
-    deleteConversion: async (conversionId: number) => {
-      const response = await fetch(`${API_BASE_URL}/dashboard/conversion/${conversionId}`, {
-        method: 'DELETE'
-      })
+    deleteConversion: async (conversionId: number, source: 'shs' | 'university' = 'shs') => {
+      // `source` tells the backend which table the conversion lives in. Without it
+      // the legacy `conversions` (SHS) table is targeted; university conversions
+      // need source='university' or the delete is a no-op (or worse, wrong row).
+      const response = await fetch(
+        `${API_BASE_URL}/dashboard/conversion/${conversionId}?source=${encodeURIComponent(source)}`,
+        { method: 'DELETE' }
+      )
       return response.json() as Promise<ApiResponse<null>>
     }
   },
@@ -288,6 +313,49 @@ export const api = {
         })
         return response.json() as Promise<ApiResponse<null>>
       }
-    }
-  }
+    },
+  },
+
+  credits: {
+    getBalance: async (userId: number) => {
+      const r = await fetch(`${API_BASE_URL}/credits/balance/${userId}`)
+      return r.json() as Promise<ApiResponse<{ balance: number }>>
+    },
+    getHistory: async (userId: number, limit = 20) => {
+      const r = await fetch(`${API_BASE_URL}/credits/history/${userId}?limit=${limit}`)
+      return r.json() as Promise<ApiResponse<Array<{
+        id: number; delta: number; reason: string; balance_after: number;
+        reference: string | null; metadata: any; created_at: string
+      }>>>
+    },
+  },
+
+  payments: {
+    getPricing: async () => {
+      const r = await fetch(`${API_BASE_URL}/payments/pricing`)
+      return r.json() as Promise<ApiResponse<{
+        pack: string; creditsPerPack: number; priceMajor: number;
+        pricePesewas: number; currency: string; publicKey: string
+      }>>
+    },
+    init: async (userId: number, email: string, callbackUrl?: string) => {
+      const r = await fetch(`${API_BASE_URL}/payments/init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, email, callbackUrl }),
+      })
+      return r.json() as Promise<ApiResponse<{
+        reference: string; authorizationUrl: string; accessCode: string;
+        amountPesewas: number; credits: number; publicKey: string
+      }>>
+    },
+    verify: async (reference: string) => {
+      const r = await fetch(
+        `${API_BASE_URL}/payments/verify/${encodeURIComponent(reference)}`
+      )
+      return r.json() as Promise<ApiResponse<{
+        success: boolean; alreadyFulfilled: boolean; status: string; balance: number | null
+      }>>
+    },
+  },
 }

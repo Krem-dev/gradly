@@ -1,31 +1,73 @@
 const { pool } = require('../config/database')
+const {
+  calculateWASSCEAggregate,
+  calculateKNUSTAggregate,
+  UNIVERSITIES_USING_KNUST_SCALE,
+} = require('../services/wassce.service')
+
+// Build the SQL list of KNUST-scaled university abbreviations for the CASE clause.
+const KNUST_ABBRS = [...UNIVERSITIES_USING_KNUST_SCALE]
+
+/**
+ * Resolve aggregates from the request body. Accepts either:
+ *   - subjects: Array<{name, grade}>  (preferred — enables per-university scaling)
+ *   - aggregate: number               (backward compat — KNUST aggregate = standard)
+ * Returns { aggregate, knustAggregate } or throws a validation error.
+ */
+function resolveAggregates(body) {
+  const { subjects, aggregate, courseStream } = body
+  if (Array.isArray(subjects) && subjects.length > 0) {
+    const standard = calculateWASSCEAggregate(subjects, { courseStream, strict: false })
+    const knust = calculateKNUSTAggregate(subjects, { courseStream, strict: false })
+    return {
+      aggregate: standard.aggregate,
+      knustAggregate: knust.aggregate,
+      missingCores: standard.missingCores,
+      warnings: standard.warnings,
+    }
+  }
+  if (typeof aggregate === 'number' && aggregate >= 6 && aggregate <= 54) {
+    // Legacy path: can't apply KNUST scaling without grades. Fall back to standard for both.
+    return { aggregate, knustAggregate: aggregate, missingCores: [], warnings: [] }
+  }
+  const err = new Error('Provide either subjects[] (preferred) or a valid aggregate (6–54)')
+  err.code = 'INVALID_INPUT'
+  throw err
+}
 
 class RecommendationController {
   static async getUniversityRecommendations(req, res) {
     try {
-      const { aggregate, academicYear = '2025/2026', courseStream } = req.body
+      const { academicYear = '2025/2026', courseStream } = req.body
 
-      if (!aggregate || aggregate < 6 || aggregate > 54) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid aggregate. Must be between 6 and 54.'
-        })
+      let aggregate, knustAggregate, missingCores, warnings
+      try {
+        ({ aggregate, knustAggregate, missingCores, warnings } = resolveAggregates(req.body))
+      } catch (e) {
+        return res.status(400).json({ success: false, error: e.message })
       }
 
       const courseStreamFilter = RecommendationController.getCourseStreamFilter(courseStream)
 
-      let query = `SELECT 
+      // Compare student's aggregate against each programme's cutoff. Use the KNUST
+      // aggregate for KNUST programmes, standard aggregate for everyone else.
+      const knustList = KNUST_ABBRS.map(() => '?').join(',') || 'NULL'
+      let query = `SELECT
           gu.abbreviation as university,
           gu.name as universityName,
           p.name as programName,
-          CAST(scp.min_aggregate AS UNSIGNED) as cutoffAggregate
+          CAST(scp.min_aggregate AS UNSIGNED) as cutoffAggregate,
+          CASE WHEN gu.abbreviation IN (${knustList}) THEN 1 ELSE 0 END as usesKnustScale
         FROM shs_cutoff_points scp
         JOIN programs p ON scp.program_id = p.id
         JOIN ghana_universities gu ON p.university_id = gu.id
         WHERE scp.academic_year = ?
-        AND ? <= scp.min_aggregate`
+        AND (
+          (gu.abbreviation IN (${knustList}) AND ? <= scp.min_aggregate)
+          OR (gu.abbreviation NOT IN (${knustList}) AND ? <= scp.min_aggregate)
+        )`
 
-      const params = [academicYear, aggregate]
+      const params = [...KNUST_ABBRS, academicYear, ...KNUST_ABBRS, knustAggregate, ...KNUST_ABBRS, aggregate]
 
       if (courseStreamFilter) {
         query += ` AND (${courseStreamFilter.conditions.join(' OR ')})`
@@ -41,6 +83,7 @@ class RecommendationController {
           groupedByUniversity[rec.university] = {
             university: rec.university,
             universityName: rec.universityName,
+            usesKnustScale: rec.usesKnustScale === 1,
             programs: []
           }
         }
@@ -55,10 +98,13 @@ class RecommendationController {
       return res.json({
         success: true,
         studentAggregate: aggregate,
+        knustAggregate,
         academicYear: academicYear,
         totalUniversitiesWithEligiblePrograms: universities.length,
         totalEligiblePrograms: recommendations.length,
-        universities: universities
+        universities: universities,
+        warnings,
+        missingCores,
       })
 
     } catch (error) {
@@ -127,15 +173,17 @@ class RecommendationController {
 
   static async getEligibleUniversities(req, res) {
     try {
-      const { aggregate, academicYear = '2025/2026' } = req.body
+      const { academicYear = '2025/2026' } = req.body
 
-      if (!aggregate || aggregate < 6 || aggregate > 54) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid aggregate. Must be between 6 and 54.'
-        })
+      let aggregate, knustAggregate
+      try {
+        ({ aggregate, knustAggregate } = resolveAggregates(req.body))
+      } catch (e) {
+        return res.status(400).json({ success: false, error: e.message })
       }
 
+      // KNUST programmes use the C4=C5=C6=4 aggregate; everyone else uses standard.
+      const knustList = KNUST_ABBRS.map(() => '?').join(',') || 'NULL'
       const [universities] = await pool.query(
         `SELECT DISTINCT
           gu.id,
@@ -144,7 +192,12 @@ class RecommendationController {
           gu.location,
           gu.website,
           COUNT(DISTINCT p.id) as totalPrograms,
-          SUM(CASE WHEN scp.min_aggregate <= ? THEN 1 ELSE 0 END) as eligiblePrograms,
+          SUM(
+            CASE WHEN gu.abbreviation IN (${knustList})
+              THEN (CASE WHEN scp.min_aggregate >= ? THEN 1 ELSE 0 END)
+              ELSE (CASE WHEN scp.min_aggregate >= ? THEN 1 ELSE 0 END)
+            END
+          ) as eligiblePrograms,
           CAST(MIN(scp.min_aggregate) AS UNSIGNED) as lowestCutoff
         FROM ghana_universities gu
         JOIN programs p ON gu.id = p.university_id
@@ -153,12 +206,13 @@ class RecommendationController {
         GROUP BY gu.id, gu.abbreviation, gu.name, gu.location, gu.website
         HAVING eligiblePrograms > 0
         ORDER BY eligiblePrograms DESC, lowestCutoff ASC`,
-        [aggregate, academicYear]
+        [...KNUST_ABBRS, knustAggregate, aggregate, academicYear]
       )
 
       return res.json({
         success: true,
         studentAggregate: aggregate,
+        knustAggregate,
         academicYear: academicYear,
         eligibleUniversities: universities.length,
         universities: universities.map(u => ({

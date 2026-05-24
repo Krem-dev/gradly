@@ -2,6 +2,11 @@ const express = require('express')
 const router = express.Router()
 const universityConverterService = require('../services/university.converter.service')
 
+// IMPORTANT: /convert is FREE. The 1-credit charge happens at /transcript/parse
+// (which is where the actual Claude API cost lives). The conversion math here
+// has no per-request cost, so charging again would be double-billing transcript
+// users. Manual-typers get a free conversion — that's intentional: they did the
+// work of typing every course in by hand.
 router.post('/convert', async (req, res) => {
   try {
     if (!req.body || typeof req.body !== 'object') {
@@ -11,7 +16,7 @@ router.post('/convert', async (req, res) => {
       })
     }
 
-    const { sourceSystem, courses, targetSystem } = req.body
+    const { sourceSystem, courses } = req.body
 
     if (!sourceSystem || !courses) {
       return res.status(400).json({
@@ -21,12 +26,7 @@ router.post('/convert', async (req, res) => {
     }
 
     const result = await universityConverterService.convertUniversityGrades(req.body)
-    
-    if (result.success) {
-      res.status(200).json(result)
-    } else {
-      res.status(400).json(result)
-    }
+    return res.status(result.success ? 200 : 400).json(result)
   } catch (error) {
     console.error('Error in /convert:', error)
     res.status(500).json({

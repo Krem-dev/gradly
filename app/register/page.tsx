@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Navigation from '@/components/Navigation'
-import Footer from '@/components/Footer'
-import { Mail, Lock, User, ArrowRight } from 'lucide-react'
+import { Mail, Lock, User } from 'lucide-react'
+import AuthShell from '@/components/ui/AuthShell'
+import TextField from '@/components/ui/TextField'
+import Checkbox from '@/components/ui/Checkbox'
+import Button from '@/components/ui/Button'
 import { api } from '@/lib/api'
 import { useToast } from '@/context/ToastContext'
 
@@ -15,23 +17,29 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [agreeToTerms, setAgreeToTerms] = useState(false)
+  const [agree, setAgree] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  const passwordStrength = scorePassword(password)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg('')
 
     if (!fullName || !email || !password) {
-      setErrorMsg('All fields are required')
+      setErrorMsg('All fields are required.')
       showToast('All fields are required', 'error')
       return
     }
-
-    if (!agreeToTerms) {
-      setErrorMsg('Please agree to terms and conditions')
-      showToast('Please agree to terms and conditions', 'error')
+    if (password.length < 8) {
+      setErrorMsg('Password must be at least 8 characters.')
+      showToast('Password must be at least 8 characters', 'error')
+      return
+    }
+    if (!agree) {
+      setErrorMsg('Please agree to the Terms & Privacy Policy.')
+      showToast('Please agree to the Terms & Privacy Policy', 'error')
       return
     }
 
@@ -39,22 +47,19 @@ export default function RegisterPage() {
 
     try {
       const response = await api.auth.register(email, password, fullName)
-      
       if (response.success && response.data) {
         localStorage.setItem('userId', response.data.id.toString())
         localStorage.setItem('userEmail', response.data.email)
         localStorage.setItem('userPlan', response.data.plan)
-        showToast('Account created successfully!', 'success')
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 1000)
+        showToast('Account created!', 'success')
+        setTimeout(() => router.push('/onboarding'), 800)
       } else {
-        setErrorMsg(response.error || 'Registration failed')
+        setErrorMsg(response.error || 'Registration failed.')
         showToast(response.error || 'Registration failed', 'error')
       }
     } catch (err) {
-      setErrorMsg('An error occurred. Please try again.')
-      showToast('An error occurred. Please try again.', 'error')
+      setErrorMsg('Something went wrong. Please try again.')
+      showToast('Something went wrong. Please try again.', 'error')
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -62,127 +67,126 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <Navigation />
-      
-      <section className="bg-white py-16 w-full">
-        <div className="max-w-md mx-auto px-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Create Your Account
-            </h1>
-            <p className="text-gray-600 text-sm">
-              Get started with Gradly in seconds
-            </p>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-            {errorMsg && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{errorMsg}</p>
-              </div>
-            )}
-            <form onSubmit={handleRegister} className="space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="John Doe"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                    required
-                    minLength={8}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={agreeToTerms}
-                  onChange={(e) => setAgreeToTerms(e.target.checked)}
-                  className="w-4 h-4 mt-0.5 text-primary border-gray-300 rounded"
-                  required
-                />
-                <label className="text-xs text-gray-600">
-                  I agree to the{' '}
-                  <Link href="/terms" className="text-primary hover:underline">
-                    Terms & Conditions
-                  </Link>{' '}
-                  and{' '}
-                  <Link href="/privacy" className="text-primary hover:underline">
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full px-6 py-3 rounded-lg font-semibold bg-primary text-white hover:bg-opacity-90 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
-                {!isLoading && <ArrowRight className="w-4 h-4" />}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link href="/login" className="text-primary font-semibold hover:underline">
-                  Sign In
-                </Link>
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center">
-            <Link href="/" className="text-sm text-gray-600 hover:text-primary">
-              ← Back to Home
-            </Link>
-          </div>
+    <AuthShell
+      kicker="Free forever"
+      title={
+        <>
+          Start your <span className="italic text-amber-dark">academic story.</span>
+        </>
+      }
+      subtitle="Two minutes to set up. Conversions, recommendations, and transcript upload come included — no credit card."
+      footer={
+        <p className="text-sm text-ink-500">
+          Already have an account?{' '}
+          <Link href="/login" className="text-ink-900 font-medium hover:text-amber-dark transition-colors">
+            Sign in →
+          </Link>
+        </p>
+      }
+      quoteIndex={1}
+    >
+      {errorMsg && (
+        <div className="mb-5 rounded-xl bg-danger/5 ring-1 ring-danger/20 px-4 py-3 text-sm text-danger">
+          {errorMsg}
         </div>
-      </section>
-    </main>
+      )}
+      <form onSubmit={handleRegister} className="space-y-5">
+        <TextField
+          label="Full name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="Ama Owusu"
+          autoComplete="name"
+          icon={<User className="h-4 w-4" />}
+          required
+        />
+        <TextField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@email.com"
+          autoComplete="email"
+          icon={<Mail className="h-4 w-4" />}
+          required
+        />
+        <div>
+          <TextField
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 8 characters"
+            autoComplete="new-password"
+            icon={<Lock className="h-4 w-4" />}
+            minLength={8}
+            required
+          />
+          {password && <PasswordMeter score={passwordStrength} />}
+        </div>
+
+        <Checkbox checked={agree} onChange={setAgree} required>
+          I agree to Gradly&apos;s{' '}
+          <Link href="/terms" className="text-ink-900 font-medium hover:text-amber-dark transition-colors">
+            Terms
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="text-ink-900 font-medium hover:text-amber-dark transition-colors">
+            Privacy Policy
+          </Link>
+          .
+        </Checkbox>
+
+        <div className="pt-1">
+          <Button
+            type="submit"
+            variant="pill"
+            size="lg"
+            className="w-full justify-center"
+            loading={isLoading}
+          >
+            {isLoading ? 'Creating account…' : 'Create account'}
+          </Button>
+        </div>
+      </form>
+    </AuthShell>
+  )
+}
+
+function scorePassword(p: string) {
+  let s = 0
+  if (p.length >= 8) s += 1
+  if (p.length >= 12) s += 1
+  if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s += 1
+  if (/\d/.test(p)) s += 1
+  if (/[^A-Za-z0-9]/.test(p)) s += 1
+  return Math.min(s, 4)
+}
+
+function PasswordMeter({ score }: { score: number }) {
+  const labels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong']
+  const colors = [
+    'bg-danger',
+    'bg-warning',
+    'bg-warning',
+    'bg-amber',
+    'bg-success',
+  ]
+  return (
+    <div className="mt-3 flex items-center gap-2">
+      <div className="flex gap-1 flex-1">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${
+              i < score ? colors[score] : 'bg-ink-100'
+            }`}
+          />
+        ))}
+      </div>
+      <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-ink-500 w-16 text-right">
+        {labels[score]}
+      </span>
+    </div>
   )
 }

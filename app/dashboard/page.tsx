@@ -1,77 +1,82 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import Navigation from '@/components/Navigation'
-import Footer from '@/components/Footer'
-import PricingModal from '@/components/PricingModal'
-import { 
-  Calculator, 
-  Crown, 
-  Calendar, 
-  Share2, 
-  Trash2, 
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Calculator,
+  Plus,
+  Trash2,
+  ArrowUpRight,
+  Share2,
+  Crown,
+  Shield,
+  KeyRound,
   LogOut,
-  FileText,
-  TrendingUp,
-  Users
+  AlertTriangle,
 } from 'lucide-react'
+import AppShell from '@/components/ui/AppShell'
+import Container from '@/components/ui/Container'
+import SectionLabel from '@/components/ui/SectionLabel'
+import Button from '@/components/ui/Button'
+import TextField from '@/components/ui/TextField'
 import { api } from '@/lib/api'
 import { useToast } from '@/context/ToastContext'
+
+interface Conversion {
+  id: number
+  /** 'shs' or 'university' — tells the delete endpoint which table to target. */
+  source?: 'shs' | 'university'
+  type?: string
+  result?: number
+  createdAt?: string
+  courses?: any[]
+  aggregate?: number
+  targetSystem?: string
+  sourceSystem?: string
+  [key: string]: any
+}
 
 export default function DashboardPage() {
   const router = useRouter()
   const { showToast } = useToast()
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showChangePassword, setShowChangePassword] = useState(false)
-  const [showPricingModal, setShowPricingModal] = useState(false)
-  const [conversions, setConversions] = useState<any[]>([])
+
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [userEmail, setUserEmail] = useState('')
+  const [conversions, setConversions] = useState<Conversion[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [deletePassword, setDeletePassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [successMsg, setSuccessMsg] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    const loadDashboardData = async () => {
+    const load = async () => {
       try {
         const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
+        const email = typeof window !== 'undefined' ? localStorage.getItem('userEmail') ?? '' : ''
+        setUserEmail(email)
         if (!userId) {
           router.push('/login')
           return
         }
-
         const statsResponse = await api.dashboard.getStats(parseInt(userId))
-        if (statsResponse.success && statsResponse.data) {
-          setUserInfo(statsResponse.data.user)
-        }
-
-        const conversionsResponse = await api.dashboard.getConversions(parseInt(userId), 10, 0)
-        if (conversionsResponse.success && conversionsResponse.data) {
-          setConversions(conversionsResponse.data)
-        }
+        if (statsResponse.success && statsResponse.data) setUserInfo(statsResponse.data.user)
+        const convResponse = await api.dashboard.getConversions(parseInt(userId), 10, 0)
+        if (convResponse.success && convResponse.data) setConversions(convResponse.data)
       } catch (err) {
         console.error('Failed to load dashboard data:', err)
       } finally {
         setIsLoading(false)
       }
     }
-
-    loadDashboardData()
+    load()
   }, [router])
-
-  const subscription = {
-    plan: userInfo?.plan || 'Free',
-    status: 'active',
-    expiresAt: null,
-    features: userInfo?.plan === 'premium' 
-      ? ['Unlimited conversions', 'Unlimited recommendations', 'Transcript upload']
-      : ['Basic conversions', 'Limited recommendations']
-  }
 
   const handleLogout = () => {
     localStorage.removeItem('userId')
@@ -80,18 +85,15 @@ export default function DashboardPage() {
     router.push('/')
   }
 
-  const handleDeleteAccount = () => {
-    setShowDeleteConfirm(false)
-    handleLogout()
-  }
-
-  const handleDeleteConversion = async (conversionId: number) => {
+  const handleDeleteConversion = async (conversionId: number, source: 'shs' | 'university') => {
     try {
-      await api.dashboard.deleteConversion(conversionId)
-      setConversions(conversions.filter(c => c.id !== conversionId))
+      const r = await api.dashboard.deleteConversion(conversionId, source)
+      if (!r.success) throw new Error(r.error || 'Delete failed')
+      // Filter by BOTH id and source — the same id can exist in both tables (auto-inc).
+      setConversions((prev) => prev.filter((c) => !(c.id === conversionId && c.source === source)))
       showToast('Conversion deleted', 'success')
     } catch (err) {
-      console.error('Failed to delete conversion:', err)
+      console.error(err)
       showToast('Failed to delete conversion', 'error')
     }
   }
@@ -99,494 +101,558 @@ export default function DashboardPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg('')
-    setSuccessMsg('')
-
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setErrorMsg('All fields are required')
-      showToast('All fields are required', 'error')
+      setErrorMsg('Fill in all fields.')
       return
     }
-
     if (newPassword !== confirmPassword) {
-      setErrorMsg('New passwords do not match')
-      showToast('New passwords do not match', 'error')
+      setErrorMsg('Passwords do not match.')
       return
     }
-
-    if (newPassword.length < 6) {
-      setErrorMsg('Password must be at least 6 characters')
-      showToast('Password must be at least 6 characters', 'error')
+    if (newPassword.length < 8) {
+      setErrorMsg('Password must be at least 8 characters.')
       return
     }
-
     setIsSubmitting(true)
-
     try {
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
-      if (!userId) {
-        setErrorMsg('User not found')
-        return
-      }
-
-      const response = await api.auth.changePassword(parseInt(userId), currentPassword, newPassword, confirmPassword)
-      
-      if (response.success) {
-        setSuccessMsg('Password changed successfully!')
-        showToast('Password changed successfully!', 'success')
-        setTimeout(() => {
-          setShowChangePassword(false)
-          setCurrentPassword('')
-          setNewPassword('')
-          setConfirmPassword('')
-        }, 1500)
+      if (!userId) return
+      const r = await api.auth.changePassword(
+        parseInt(userId),
+        currentPassword,
+        newPassword,
+        confirmPassword
+      )
+      if (r.success) {
+        showToast('Password changed', 'success')
+        setShowChangePassword(false)
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
       } else {
-        setErrorMsg(response.error || 'Failed to change password')
-        showToast(response.error || 'Failed to change password', 'error')
+        setErrorMsg(r.error || 'Failed to change password.')
       }
     } catch (err) {
-      setErrorMsg('An error occurred. Please try again.')
-      showToast('An error occurred. Please try again.', 'error')
       console.error(err)
+      setErrorMsg('Failed to change password.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleDeleteAccountConfirm = async () => {
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
     setErrorMsg('')
-    setSuccessMsg('')
-
     if (!deletePassword) {
-      setErrorMsg('Password is required to delete account')
-      showToast('Password is required to delete account', 'error')
+      setErrorMsg('Enter your password to confirm.')
       return
     }
-
     setIsSubmitting(true)
-
     try {
       const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null
-      if (!userId) {
-        setErrorMsg('User not found')
-        return
-      }
-
-      const response = await api.auth.deleteAccount(parseInt(userId), deletePassword)
-      
-      if (response.success) {
-        setSuccessMsg('Account deleted successfully. Redirecting...')
-        showToast('Account deleted successfully', 'success')
-        setTimeout(() => {
-          localStorage.removeItem('userId')
-          localStorage.removeItem('userEmail')
-          localStorage.removeItem('userPlan')
-          router.push('/')
-        }, 2000)
+      if (!userId) return
+      const r = await api.auth.deleteAccount(parseInt(userId), deletePassword)
+      if (r.success) {
+        showToast('Account deleted', 'success')
+        handleLogout()
       } else {
-        setErrorMsg(response.error || 'Failed to delete account')
-        showToast(response.error || 'Failed to delete account', 'error')
+        setErrorMsg(r.error || 'Failed to delete account.')
       }
     } catch (err) {
-      setErrorMsg('An error occurred. Please try again.')
-      showToast('An error occurred. Please try again.', 'error')
       console.error(err)
+      setErrorMsg('Failed to delete account.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleShare = () => {
-    const shareUrl = 'https://gradly.app/invite?ref=user123'
-    if (navigator.share) {
-      navigator.share({
-        title: 'Join Gradly',
-        text: 'Calculate your grades and find your ideal university programs!',
-        url: shareUrl
-      })
-    } else {
-      navigator.clipboard.writeText(shareUrl)
-      alert('Invite link copied to clipboard!')
+  const stats = useMemo(() => {
+    const now = new Date()
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const inMonth = conversions.filter((c) => {
+      if (!c.createdAt) return false
+      return new Date(c.createdAt) >= monthStart
+    }).length
+    return {
+      total: conversions.length,
+      thisMonth: inMonth,
+      plan: userInfo?.plan ?? 'free',
+      streak: '—',
     }
+  }, [conversions, userInfo])
+
+  const credits = userInfo?.credits ?? 0
+  // Prefer the user's real first name from registration. Fall back to the part of
+  // their email before @ (with separators replaced) only if no full name was set.
+  const userName = (() => {
+    const full = (userInfo?.fullName || '').trim()
+    if (full) {
+      // Use just the first name — feels warmer than "Yaw Amponsah Mensah."
+      return full.split(/\s+/)[0]
+    }
+    return (userEmail.split('@')[0] || 'there').replace(/[-_.]/g, ' ')
+  })()
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <section className="py-32 text-center">
+          <p className="text-sm font-mono uppercase tracking-[0.18em] text-ink-500">
+            Loading your dashboard…
+          </p>
+        </section>
+      </AppShell>
+    )
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col">
-      <Navigation />
+    <AppShell>
+      {/* Welcome header */}
+      <section className="bg-ink-900 text-white relative overflow-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, #FFFFFF 1px, transparent 1px), linear-gradient(to bottom, #FFFFFF 1px, transparent 1px)',
+            backgroundSize: '64px 64px',
+          }}
+        />
+        <div className="pointer-events-none absolute -top-32 right-1/4 h-[420px] w-[640px] rounded-full bg-amber/15 blur-[140px]" />
 
-      <section className="flex-1 py-8 w-full">
-        <div className="max-w-7xl mx-auto px-4">
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-secondary rounded-lg border border-primary p-4 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-lg bg-primary bg-opacity-20 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">{conversions.length}</p>
-              <p className="text-xs text-gray-600 mt-1">Total Conversions</p>
+        <Container size="wide" className="relative py-14 md:py-20">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <SectionLabel tone="light">Dashboard</SectionLabel>
+              <h1 className="font-display mt-4 text-display-md md:text-display-lg [text-wrap:balance]">
+                Welcome back, <span className="italic text-amber capitalize">{userName}.</span>
+              </h1>
+              <p className="mt-4 text-base text-ink-300 max-w-md">
+                Pick up where you left off. Your saved conversions and recommendations are right where you saved them.
+              </p>
             </div>
-
-            <div className="bg-secondary rounded-lg border border-primary p-4 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-lg bg-primary bg-opacity-20 flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-primary" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">3</p>
-              <p className="text-xs text-gray-600 mt-1">This Month</p>
-            </div>
-
-            <div className="bg-secondary rounded-lg border border-primary p-4 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-lg bg-primary bg-opacity-20 flex items-center justify-center">
-                  <Crown className="w-4 h-4 text-primary" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">{subscription.plan}</p>
-              <p className="text-xs text-gray-600 mt-1">Current Plan</p>
-            </div>
-
-            <div className="bg-secondary rounded-lg border border-primary p-4 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-8 h-8 rounded-lg bg-primary bg-opacity-20 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-primary" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">0</p>
-              <p className="text-xs text-gray-600 mt-1">Referrals</p>
+            <div className="flex items-center gap-3">
+              <Button variant="pill" size="lg" href="/start">
+                New conversion
+              </Button>
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Recent Conversions</h2>
-                  <button
-                    onClick={() => router.push('/start')}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-opacity-90 transition-all"
-                  >
-                    New Conversion
-                  </button>
+
+          {/* Stats */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-5">
+            <DashStat label="Conversions" value={stats.total.toString()} sub="All time" highlight />
+            <DashStat label="This month" value={stats.thisMonth.toString()} sub="Saved in the last 30 days" />
+            <DashStat
+              label="Credits"
+              value={credits.toString()}
+              sub={credits > 0 ? `${credits === 1 ? 'pack credit' : 'pack credits'} available` : 'Buy a Convert Pack'}
+            />
+            <DashStat label="Email" value={userEmail.split('@')[0]} sub={userEmail.split('@')[1] || ''} muted />
+          </div>
+        </Container>
+      </section>
+
+      {/* Body */}
+      <section className="py-14 md:py-20">
+        <Container size="wide">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            {/* MAIN — saved conversions */}
+            <div className="lg:col-span-8 space-y-10">
+              <div>
+                <div className="flex items-end justify-between mb-6">
+                  <div>
+                    <SectionLabel number="01">Saved</SectionLabel>
+                    <h2 className="mt-3 font-display text-2xl md:text-3xl text-ink-900">
+                      Your <span className="italic text-amber-dark">conversions.</span>
+                    </h2>
+                  </div>
+                  <span className="font-mono text-xs uppercase tracking-[0.18em] text-ink-500">
+                    {conversions.length} saved
+                  </span>
                 </div>
 
                 {conversions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calculator className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 text-sm mb-4">No conversions yet</p>
-                    <button
-                      onClick={() => router.push('/start')}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold text-primary border-2 border-primary hover:bg-primary hover:text-white transition-all"
-                    >
-                      Start Your First Conversion
-                    </button>
+                  <div className="rounded-3xl border-2 border-dashed border-ink-100 p-12 text-center">
+                    <Calculator className="h-6 w-6 text-ink-300 mx-auto mb-3" />
+                    <p className="font-display text-lg text-ink-900">Nothing saved yet</p>
+                    <p className="mt-1.5 text-sm text-ink-500 mb-6">
+                      Calculate your WASSCE aggregate or convert your university grades — your results land here.
+                    </p>
+                    <Button variant="pill" size="md" href="/start">
+                      Start your first conversion
+                    </Button>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wide">Type</th>
-                          <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wide">Details</th>
-                          <th className="text-center py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wide">Result</th>
-                          <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wide">Date</th>
-                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wide">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {conversions.map((conversion) => {
-                          const courseCount = Array.isArray(conversion.courses) ? conversion.courses.length : 0
-                          const formattedDate = conversion.created_at 
-                            ? new Date(conversion.created_at).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric'
-                              })
-                            : 'N/A'
-                          
-                          return (
-                          <tr key={conversion.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td className="py-4 px-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-primary bg-opacity-10 flex items-center justify-center flex-shrink-0">
-                                  <FileText className="w-4 h-4 text-primary" />
-                                </div>
-                                <span className="font-semibold text-gray-900 text-sm">Conversion</span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-4 text-sm text-gray-600">
-                              {courseCount > 0 ? `${courseCount} courses` : 'courses'}
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-primary bg-opacity-10 text-primary font-bold text-lg">
-                                {conversion.usa_gpa || 'N/A'}
-                              </span>
-                            </td>
-                            <td className="py-4 px-4 text-sm text-gray-600">
-                              {formattedDate}
-                            </td>
-                            <td className="py-4 px-4 text-right">
-                              <button 
-                                onClick={() => handleDeleteConversion(conversion.id)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-all"
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ul className="space-y-2.5">
+                    {conversions.map((c, i) => (
+                      <ConversionRow
+                        key={c.id ?? i}
+                        conv={c}
+                        index={i}
+                        onDelete={() => handleDeleteConversion(c.id, c.source ?? 'shs')}
+                      />
+                    ))}
+                  </ul>
                 )}
               </div>
 
+              {/* Quick actions */}
+              <div>
+                <SectionLabel number="02">Quick actions</SectionLabel>
+                <h2 className="mt-3 font-display text-2xl md:text-3xl text-ink-900">
+                  Pick up <span className="italic text-amber-dark">where you left off.</span>
+                </h2>
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ActionCard
+                    title="WASSCE aggregate"
+                    description="Compute your aggregate by stream and board."
+                    href="/shs/course-selection"
+                  />
+                  <ActionCard
+                    title="University conversion"
+                    description="Translate your CWA / CGPA to any global system."
+                    href="/university/convert"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary bg-opacity-10 flex items-center justify-center">
-                    <Crown className="w-5 h-5 text-primary" />
+            {/* SIDE — plan + account */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Convert Pack credits card */}
+              <div className="rounded-[28px] bg-ink-900 text-white p-6 ring-1 ring-white/5 shadow-lift overflow-hidden relative">
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-amber/15 blur-[100px]"
+                />
+                <div className="relative">
+                  <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-300">
+                    <Crown className="h-3.5 w-3.5 text-amber" />
+                    Convert credits
                   </div>
-                  <div>
-                    <h2 className="font-bold text-gray-900">Subscription</h2>
-                    <p className="text-xs text-gray-600">{subscription.plan} Plan</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Status</span>
-                    <span className="font-semibold text-green-600 capitalize">
-                      {subscription.status}
+                  <div className="mt-4 flex items-baseline gap-2">
+                    <span className="font-display text-5xl text-white">{credits}</span>
+                    <span className="text-sm text-ink-300">
+                      {credits === 1 ? 'credit' : 'credits'}
                     </span>
                   </div>
-                  {subscription.expiresAt && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Expires</span>
-                      <span className="font-semibold text-gray-900">
-                        {new Date(subscription.expiresAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Features:</p>
-                  <ul className="space-y-1">
-                    {subscription.features.map((feature, idx) => (
-                      <li key={idx} className="text-xs text-gray-600 flex items-center gap-2">
-                        <span className="text-primary">✓</span>
-                        {feature}
+                  <div className="mt-1 text-sm text-amber">
+                    {credits > 0
+                      ? `Good for ${credits} more ${credits === 1 ? 'conversion' : 'conversions'}`
+                      : 'Buy a Convert Pack to unlock university conversions'}
+                  </div>
+                  <div className="my-5 h-px bg-white/10" />
+                  <ul className="space-y-2.5 text-sm">
+                    {[
+                      'WASSCE aggregate — free',
+                      'Ghana recommendations — free',
+                      '1 credit per university conversion',
+                      '1 credit per transcript upload',
+                    ].map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-ink-200">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber" />
+                        {f}
                       </li>
                     ))}
                   </ul>
+                  <div className="mt-6">
+                    <Button variant="pill" size="md" href="/pricing">
+                      {credits > 0 ? 'Buy more credits' : 'Buy Convert Pack — 20 GHS'}
+                    </Button>
+                  </div>
                 </div>
-
-                {subscription.plan === 'Free' && (
-                  <button
-                    onClick={() => setShowPricingModal(true)}
-                    className="w-full px-4 py-2 rounded-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:opacity-90 transition-all text-sm"
-                  >
-                    Upgrade to Premium
-                  </button>
-                )}
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="font-bold text-gray-900 mb-4">Share & Earn</h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  Invite friends and get rewards when they sign up!
+              {/* Share card */}
+              <div className="rounded-[28px] bg-surface-muted p-6 ring-1 ring-ink-100">
+                <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-500">
+                  <Share2 className="h-3.5 w-3.5 text-amber-dark" />
+                  Share Gradly
+                </div>
+                <div className="mt-3 font-display text-xl text-ink-900">
+                  Know a friend taking <span className="italic text-amber-dark">WASSCE?</span>
+                </div>
+                <p className="mt-2 text-sm text-ink-500 leading-relaxed">
+                  Send them Gradly. We&apos;ll do the math, recommendations, and conversions for them too.
                 </p>
                 <button
-                  onClick={handleShare}
-                  className="w-full px-4 py-2 rounded-lg font-semibold bg-primary text-white hover:bg-opacity-90 transition-all text-sm flex items-center justify-center gap-2"
+                  onClick={() => {
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                      navigator.clipboard.writeText(window.location.origin)
+                      showToast('Link copied to clipboard', 'success')
+                    }
+                  }}
+                  className="mt-5 inline-flex items-center gap-2 rounded-pill ring-1 ring-ink-200 hover:ring-ink-400 px-4 py-2 text-sm text-ink-700 transition-colors"
                 >
-                  <Share2 className="w-4 h-4" />
-                  Share Invite Link
+                  Copy link
                 </button>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="font-bold text-gray-900 mb-4">Account Settings</h2>
-                <div className="space-y-2">
-                  <button className="w-full text-left px-3 py-2 rounded text-sm text-gray-700 hover:bg-gray-50 transition-all">
-                    Edit Profile
-                  </button>
-                  <button 
-                    onClick={() => setShowChangePassword(true)}
-                    className="w-full text-left px-3 py-2 rounded text-sm text-gray-700 hover:bg-gray-50 transition-all"
-                  >
-                    Change Password
-                  </button>
-                  <button className="w-full text-left px-3 py-2 rounded text-sm text-gray-700 hover:bg-gray-50 transition-all">
-                    Notification Settings
-                  </button>
+              {/* Account settings */}
+              <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink-100">
+                <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-500">
+                  <Shield className="h-3.5 w-3.5" />
+                  Account
+                </div>
+                <div className="mt-2 text-sm text-ink-500 break-all">{userEmail}</div>
+
+                <div className="mt-5 space-y-2">
                   <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full text-left px-3 py-2 rounded text-sm text-red-600 hover:bg-red-50 transition-all flex items-center gap-2"
+                    onClick={() => setShowChangePassword((s) => !s)}
+                    className="w-full flex items-center justify-between rounded-2xl bg-surface-muted ring-1 ring-ink-100 px-4 py-3 text-sm text-ink-700 hover:ring-ink-300 transition-all"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    Delete Account
+                    <span className="inline-flex items-center gap-2">
+                      <KeyRound className="h-3.5 w-3.5" />
+                      Change password
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-ink-400" />
+                  </button>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-between rounded-2xl bg-surface-muted ring-1 ring-ink-100 px-4 py-3 text-sm text-ink-700 hover:ring-ink-300 transition-all"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LogOut className="h-3.5 w-3.5" />
+                      Sign out
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-ink-400" />
+                  </button>
+
+                  <button
+                    onClick={() => setShowDeleteConfirm((s) => !s)}
+                    className="w-full flex items-center justify-between rounded-2xl bg-danger/5 ring-1 ring-danger/20 px-4 py-3 text-sm text-danger hover:bg-danger/10 transition-all"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Delete account
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
+
+                {/* Change password panel */}
+                <AnimatePresence initial={false}>
+                  {showChangePassword && (
+                    <motion.form
+                      onSubmit={handleChangePassword}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="mt-4 overflow-hidden"
+                    >
+                      <div className="space-y-3 pt-2">
+                        {errorMsg && (
+                          <p className="text-xs text-danger">{errorMsg}</p>
+                        )}
+                        <TextField
+                          label="Current password"
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          required
+                        />
+                        <TextField
+                          label="New password"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          minLength={8}
+                          required
+                        />
+                        <TextField
+                          label="Confirm new password"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          minLength={8}
+                          required
+                        />
+                        <Button
+                          type="submit"
+                          variant="pill"
+                          size="md"
+                          className="w-full justify-center"
+                          loading={isSubmitting}
+                        >
+                          {isSubmitting ? 'Updating…' : 'Update password'}
+                        </Button>
+                      </div>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
+
+                {/* Delete account panel */}
+                <AnimatePresence initial={false}>
+                  {showDeleteConfirm && (
+                    <motion.form
+                      onSubmit={handleDeleteAccount}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="mt-4 overflow-hidden"
+                    >
+                      <div className="space-y-3 pt-2 rounded-2xl bg-danger/5 ring-1 ring-danger/20 p-4">
+                        <p className="text-sm text-danger">
+                          This is permanent. Your conversions and recommendations will be erased.
+                        </p>
+                        {errorMsg && (
+                          <p className="text-xs text-danger">{errorMsg}</p>
+                        )}
+                        <TextField
+                          label="Confirm with your password"
+                          type="password"
+                          value={deletePassword}
+                          onChange={(e) => setDeletePassword(e.target.value)}
+                          required
+                        />
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-pill bg-danger text-white hover:bg-danger/90 transition-colors text-sm disabled:opacity-50"
+                        >
+                          {isSubmitting ? 'Deleting…' : 'Delete my account'}
+                        </button>
+                      </div>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
-        </div>
+        </Container>
       </section>
+    </AppShell>
+  )
+}
 
-      {showChangePassword && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Change Password</h3>
-            
-            {errorMsg && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{errorMsg}</p>
-              </div>
-            )}
-            
-            {successMsg && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">{successMsg}</p>
-              </div>
-            )}
+function DashStat({
+  label,
+  value,
+  sub,
+  highlight,
+  muted,
+}: {
+  label: string
+  value: string
+  sub: string
+  highlight?: boolean
+  muted?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-3xl p-5 md:p-6 ring-1 ${
+        highlight
+          ? 'bg-amber/10 ring-amber/30'
+          : muted
+          ? 'bg-white/[0.02] ring-white/5'
+          : 'bg-white/[0.04] ring-white/10'
+      }`}
+    >
+      <div
+        className={`font-mono text-[10px] uppercase tracking-[0.22em] ${
+          highlight ? 'text-amber' : 'text-ink-300'
+        }`}
+      >
+        {label}
+      </div>
+      <div
+        className={`mt-2 font-display text-3xl md:text-4xl leading-none truncate ${
+          highlight ? 'text-amber' : 'text-white'
+        }`}
+        title={value}
+      >
+        {value}
+      </div>
+      <div className="mt-2 text-xs text-ink-300 truncate" title={sub}>{sub}</div>
+    </div>
+  )
+}
 
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                  required
-                />
-              </div>
+function ConversionRow({
+  conv,
+  index,
+  onDelete,
+}: {
+  conv: Conversion
+  index: number
+  onDelete: () => void
+}) {
+  const isShs = (conv.type || '').toLowerCase().includes('shs') || typeof conv.aggregate === 'number'
+  const label = isShs ? 'SHS Aggregate' : 'University Conversion'
+  const numeric = isShs
+    ? conv.aggregate?.toString() ?? conv.result?.toString() ?? '—'
+    : conv.result?.toFixed?.(2) ?? conv.result?.toString() ?? '—'
+  const sub = isShs
+    ? 'Best 6 subjects'
+    : conv.targetSystem === 'usa_gpa'
+    ? 'USA GPA (4.0)'
+    : conv.targetSystem === 'uk_percentage'
+    ? 'UK Percentage'
+    : conv.sourceSystem ?? 'Converted score'
+  const date = conv.createdAt ? new Date(conv.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowChangePassword(false)
-                    setCurrentPassword('')
-                    setNewPassword('')
-                    setConfirmPassword('')
-                    setErrorMsg('')
-                    setSuccessMsg('')
-                  }}
-                  className="flex-1 px-4 py-2 rounded-lg font-semibold bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 rounded-lg font-semibold bg-primary text-white hover:opacity-90 transition-all text-sm disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Updating...' : 'Update Password'}
-                </button>
-              </div>
-            </form>
-          </div>
+  return (
+    <motion.li
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.02, ease: [0.22, 1, 0.36, 1] }}
+      className="group flex items-center gap-4 rounded-2xl bg-white ring-1 ring-ink-100 hover:ring-ink-300 hover:shadow-soft p-4 transition-all"
+    >
+      <span className="font-mono text-xs text-ink-400 w-10">
+        {String(index + 1).padStart(2, '0')}
+      </span>
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber/10 text-amber-dark ring-1 ring-amber/20">
+        <Calculator className="h-4 w-4" />
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-display text-base md:text-lg text-ink-900 truncate">{label}</span>
+          <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-ink-400">
+            {date}
+          </span>
         </div>
-      )}
+        <div className="text-sm text-ink-500 mt-0.5 truncate">{sub}</div>
+      </div>
+      <div className="text-right">
+        <div className="font-display text-2xl text-ink-900 leading-none">{numeric}</div>
+      </div>
+      <button
+        onClick={onDelete}
+        aria-label="Delete conversion"
+        className="h-9 w-9 inline-flex items-center justify-center rounded-full text-ink-400 hover:text-danger hover:bg-danger/5 transition-colors"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </motion.li>
+  )
+}
 
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Account?</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              This action cannot be undone. All your data will be permanently deleted.
-            </p>
-
-            {errorMsg && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{errorMsg}</p>
-              </div>
-            )}
-            
-            {successMsg && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">{successMsg}</p>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-900 mb-1">
-                Confirm with your password
-              </label>
-              <input
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                required
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteConfirm(false)
-                  setDeletePassword('')
-                  setErrorMsg('')
-                  setSuccessMsg('')
-                }}
-                className="flex-1 px-4 py-2 rounded-lg font-semibold bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteAccountConfirm}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-2 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 transition-all text-sm disabled:opacity-50"
-              >
-                {isSubmitting ? 'Deleting...' : 'Delete Account'}
-              </button>
-            </div>
-          </div>
+function ActionCard({
+  title,
+  description,
+  href,
+}: {
+  title: string
+  description: string
+  href: string
+}) {
+  return (
+    <a
+      href={href}
+      className="group block rounded-3xl bg-white ring-1 ring-ink-100 hover:ring-ink-400 hover:shadow-soft p-6 transition-all"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-display text-xl text-ink-900">{title}</h3>
+          <p className="mt-2 text-sm text-ink-500 leading-relaxed">{description}</p>
         </div>
-      )}
-      <PricingModal isOpen={showPricingModal} onClose={() => setShowPricingModal(false)} />
-      <Footer />
-    </main>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-50 text-ink-700 group-hover:bg-amber group-hover:text-ink-900 transition-colors">
+          <Plus className="h-4 w-4" />
+        </span>
+      </div>
+    </a>
   )
 }

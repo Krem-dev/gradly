@@ -3,53 +3,45 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Navigation from '@/components/Navigation'
-import Footer from '@/components/Footer'
-import { Mail, ArrowRight, ArrowLeft, Lock } from 'lucide-react'
+import { Mail, Lock, ArrowLeft } from 'lucide-react'
+import AuthShell from '@/components/ui/AuthShell'
+import TextField from '@/components/ui/TextField'
+import OTPInput from '@/components/ui/OTPInput'
+import Button from '@/components/ui/Button'
 import { api } from '@/lib/api'
 import { useToast } from '@/context/ToastContext'
+
+type Step = 'email' | 'otp' | 'reset'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const { showToast } = useToast()
-  const [step, setStep] = useState<'email' | 'otp' | 'reset'>('email')
+  const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
-  const [successMsg, setSuccessMsg] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg('')
-    setSuccessMsg('')
-
     if (!email) {
-      setErrorMsg('Email is required')
-      showToast('Email is required', 'error')
+      setErrorMsg('Email is required.')
       return
     }
-
     setIsLoading(true)
-
     try {
-      const response = await api.auth.sendOTP(email)
-      
-      if (response.success) {
-        setSuccessMsg('OTP sent to your email')
-        showToast('OTP sent to your email', 'success')
+      const r = await api.auth.sendOTP(email)
+      if (r.success) {
+        showToast('Verification code sent to your email', 'success')
         setStep('otp')
-        setOtpSent(true)
       } else {
-        setErrorMsg(response.error || 'Failed to send OTP')
-        showToast(response.error || 'Failed to send OTP', 'error')
+        setErrorMsg(r.error || 'Failed to send code.')
       }
     } catch (err) {
-      setErrorMsg('An error occurred. Please try again.')
-      showToast('An error occurred. Please try again.', 'error')
+      setErrorMsg('Something went wrong. Please try again.')
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -59,30 +51,21 @@ export default function ForgotPasswordPage() {
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg('')
-    setSuccessMsg('')
-
-    if (!otp || otp.length !== 4) {
-      setErrorMsg('Please enter a valid 4-digit OTP')
-      showToast('Please enter a valid 4-digit OTP', 'error')
+    if (otp.length !== 4) {
+      setErrorMsg('Enter the 4-digit code.')
       return
     }
-
     setIsLoading(true)
-
     try {
-      const response = await api.auth.verifyOTP(email, otp)
-      
-      if (response.success) {
-        setSuccessMsg('OTP verified successfully')
-        showToast('OTP verified successfully', 'success')
+      const r = await api.auth.verifyOTP(email, otp)
+      if (r.success) {
+        showToast('Code verified', 'success')
         setStep('reset')
       } else {
-        setErrorMsg(response.error || 'Invalid OTP')
-        showToast(response.error || 'Invalid OTP', 'error')
+        setErrorMsg(r.error || 'Invalid code.')
       }
     } catch (err) {
-      setErrorMsg('An error occurred. Please try again.')
-      showToast('An error occurred. Please try again.', 'error')
+      setErrorMsg('Something went wrong. Please try again.')
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -92,207 +75,188 @@ export default function ForgotPasswordPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg('')
-    setSuccessMsg('')
-
     if (!newPassword || !confirmPassword) {
-      setErrorMsg('Both password fields are required')
-      showToast('Both password fields are required', 'error')
+      setErrorMsg('Fill both password fields.')
       return
     }
-
     if (newPassword !== confirmPassword) {
-      setErrorMsg('Passwords do not match')
-      showToast('Passwords do not match', 'error')
+      setErrorMsg('Passwords do not match.')
       return
     }
-
-    if (newPassword.length < 6) {
-      setErrorMsg('Password must be at least 6 characters')
-      showToast('Password must be at least 6 characters', 'error')
+    if (newPassword.length < 8) {
+      setErrorMsg('Password must be at least 8 characters.')
       return
     }
-
     setIsLoading(true)
-
     try {
-      const response = await api.auth.resetPassword(email, newPassword, confirmPassword)
-      
-      if (response.success) {
-        setSuccessMsg('Password reset successfully!')
-        showToast('Password reset successfully!', 'success')
-        setTimeout(() => {
-          router.push('/login')
-        }, 2000)
+      const r = await api.auth.resetPassword(email, newPassword, confirmPassword)
+      if (r.success) {
+        showToast('Password reset! Redirecting…', 'success')
+        setTimeout(() => router.push('/login'), 1200)
       } else {
-        setErrorMsg(response.error || 'Failed to reset password')
-        showToast(response.error || 'Failed to reset password', 'error')
+        setErrorMsg(r.error || 'Failed to reset password.')
       }
     } catch (err) {
-      setErrorMsg('An error occurred. Please try again.')
-      showToast('An error occurred. Please try again.', 'error')
+      setErrorMsg('Something went wrong. Please try again.')
       console.error(err)
     } finally {
       setIsLoading(false)
     }
   }
 
+  const titles: Record<Step, { kicker: string; title: React.ReactNode; subtitle: string }> = {
+    email: {
+      kicker: 'Forgot password',
+      title: (
+        <>
+          Let&apos;s get you <span className="italic text-amber-dark">back in.</span>
+        </>
+      ),
+      subtitle: 'Enter the email on your Gradly account and we will send you a 4-digit verification code.',
+    },
+    otp: {
+      kicker: 'Verify',
+      title: (
+        <>
+          Check your <span className="italic text-amber-dark">inbox.</span>
+        </>
+      ),
+      subtitle: `We sent a 4-digit code to ${email}. It expires in 10 minutes.`,
+    },
+    reset: {
+      kicker: 'New password',
+      title: (
+        <>
+          Set a <span className="italic text-amber-dark">new password.</span>
+        </>
+      ),
+      subtitle: 'Choose something only you would know. At least 8 characters.',
+    },
+  }
+  const t = titles[step]
+
   return (
-    <main className="min-h-screen bg-white flex flex-col">
-      <Navigation />
-      
-      <section className="bg-white py-16 w-full">
-        <div className="max-w-md mx-auto px-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Reset Password
-            </h1>
-            <p className="text-gray-600 text-sm">
-              {step === 'email' ? 'Enter your email to receive an OTP' : step === 'otp' ? 'Enter the 4-digit OTP sent to your email' : 'Create a new password'}
-            </p>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-            {errorMsg && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{errorMsg}</p>
-              </div>
-            )}
-            
-            {successMsg && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">{successMsg}</p>
-              </div>
-            )}
-
-            {step === 'email' ? (
-              <form onSubmit={handleSendOTP} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full px-6 py-3 rounded-lg font-semibold bg-primary text-white hover:opacity-90 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Sending...' : 'Send OTP'}
-                  {!isLoading && <ArrowRight className="w-4 h-4" />}
-                </button>
-              </form>
-            ) : step === 'otp' ? (
-              <form onSubmit={handleVerifyOTP} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Enter OTP
-                  </label>
-                  <input
-                    type="text"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="0000"
-                    maxLength={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary text-center tracking-widest"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-2">Check your email for the 4-digit code</p>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full px-6 py-3 rounded-lg font-semibold bg-primary text-white hover:opacity-90 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Verifying...' : 'Verify OTP'}
-                  {!isLoading && <ArrowRight className="w-4 h-4" />}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleResetPassword} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                    required
-                    minLength={6}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary"
-                    required
-                    minLength={6}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full px-6 py-3 rounded-lg font-semibold bg-primary text-white hover:opacity-90 transition-all shadow-md hover:shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Resetting...' : 'Reset Password'}
-                  {!isLoading && <ArrowRight className="w-4 h-4" />}
-                </button>
-              </form>
-            )}
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => {
-                  setStep('email')
-                  setEmail('')
-                  setOtp('')
-                  setNewPassword('')
-                  setConfirmPassword('')
-                  setErrorMsg('')
-                  setSuccessMsg('')
-                  setOtpSent(false)
-                }}
-                className="text-sm text-gray-600 hover:text-primary flex items-center justify-center gap-2 mx-auto"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Start Over
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Remember your password?{' '}
-              <Link href="/login" className="text-primary font-semibold hover:underline">
-                Sign In
-              </Link>
-            </p>
-          </div>
+    <AuthShell
+      kicker={t.kicker}
+      title={t.title}
+      subtitle={t.subtitle}
+      footer={
+        <div className="flex items-center justify-between text-sm">
+          {step !== 'email' ? (
+            <button
+              onClick={() => {
+                setStep('email')
+                setOtp('')
+                setNewPassword('')
+                setConfirmPassword('')
+                setErrorMsg('')
+              }}
+              className="inline-flex items-center gap-1.5 text-ink-500 hover:text-ink-900 transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Start over
+            </button>
+          ) : (
+            <span />
+          )}
+          <Link
+            href="/login"
+            className="text-ink-500 hover:text-ink-900 transition-colors"
+          >
+            Back to sign in →
+          </Link>
         </div>
-      </section>
-      <Footer />
-    </main>
+      }
+      quoteIndex={0}
+    >
+      {errorMsg && (
+        <div className="mb-5 rounded-xl bg-danger/5 ring-1 ring-danger/20 px-4 py-3 text-sm text-danger">
+          {errorMsg}
+        </div>
+      )}
+
+      {step === 'email' && (
+        <form onSubmit={handleSendOTP} className="space-y-5">
+          <TextField
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@email.com"
+            icon={<Mail className="h-4 w-4" />}
+            autoComplete="email"
+            required
+          />
+          <Button
+            type="submit"
+            variant="pill"
+            size="lg"
+            className="w-full justify-center"
+            loading={isLoading}
+          >
+            {isLoading ? 'Sending code…' : 'Send code'}
+          </Button>
+        </form>
+      )}
+
+      {step === 'otp' && (
+        <form onSubmit={handleVerifyOTP} className="space-y-6">
+          <OTPInput value={otp} onChange={setOtp} length={4} />
+          <Button
+            type="submit"
+            variant="pill"
+            size="lg"
+            className="w-full justify-center"
+            loading={isLoading}
+          >
+            {isLoading ? 'Verifying…' : 'Verify code'}
+          </Button>
+          <p className="text-center text-xs text-ink-500">
+            Didn&apos;t get it?{' '}
+            <button
+              type="button"
+              onClick={() => handleSendOTP({ preventDefault: () => {} } as React.FormEvent)}
+              className="text-ink-900 font-medium hover:text-amber-dark transition-colors"
+            >
+              Resend
+            </button>
+          </p>
+        </form>
+      )}
+
+      {step === 'reset' && (
+        <form onSubmit={handleResetPassword} className="space-y-5">
+          <TextField
+            label="New password"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="At least 8 characters"
+            icon={<Lock className="h-4 w-4" />}
+            autoComplete="new-password"
+            required
+          />
+          <TextField
+            label="Confirm password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter your password"
+            icon={<Lock className="h-4 w-4" />}
+            autoComplete="new-password"
+            required
+          />
+          <Button
+            type="submit"
+            variant="pill"
+            size="lg"
+            className="w-full justify-center"
+            loading={isLoading}
+          >
+            {isLoading ? 'Resetting…' : 'Reset password'}
+          </Button>
+        </form>
+      )}
+    </AuthShell>
   )
 }

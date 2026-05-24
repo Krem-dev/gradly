@@ -2,14 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --ink: #0B1437;
+  --ink-900: #0B1437;
+  --ink-800: #0F172A;
+  --ink-500: #475569;
+  --ink-300: #94A3B8;
+  --ink-100: #E2E8F0;
+  --indigo: #4F46E5;
+  --amber: #F59E0B;
+  --surface: #FFFFFF;
+  --surface-alt: #FAFAFB;
+  --surface-muted: #F4F5F7;
+}
+
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 body {
-  font-family: 'Inter', sans-serif;
-  color: #111827;
-  background-color: #FFFFFF;
+  font-family: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
+  color: var(--ink-800);
+  background-color: var(--surface);
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.font-display {
+  font-family: var(--font-fraunces), Fraunces, Georgia, serif;
+  font-feature-settings: 'ss01', 'opsz' 144;
+}
+
+.marquee-track {
+  width: max-content;
+}
+
+::selection {
+  background: var(--ink-800);
+  color: white;
 }
