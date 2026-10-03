@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fluentui/react-components": "^9.74.9",
+    "@fluentui/react-icons": "^2.0.343",
+    "@fluentui/react-motion": "^9.16.4",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.344.0",
     "next": "^14.2.0",

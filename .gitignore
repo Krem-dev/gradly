@@ -13,3 +13,7 @@ backend/.env.local
 
 # Claude Code session data
 .claude/
+
+# Local screenshot output from the component gallery
+.preview-shots/
+tsconfig.tsbuildinfo
