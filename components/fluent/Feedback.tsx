@@ -22,53 +22,51 @@ import {
   Button,
   makeStyles,
   mergeClasses,
+  shorthands,
   tokens,
   type ToastIntent,
+  Caption1,
   type MessageBarProps,
 } from '@fluentui/react-components'
 import { DismissRegular } from '@fluentui/react-icons'
-import { gradlyTokens } from '@/lib/fluent'
 import { IconButton } from './Button'
 import { useGradlyTheme } from './GradlyProvider'
 import { Body } from './Text'
-import { Stack } from './Layout'
 
 const useStyles = makeStyles({
-  bar: {
-    borderRadius: tokens.borderRadiusLarge,
-    // Fluent's MessageBar lays out on one line until it is told it may reflow;
-    // without this the title + body + action row overflows a phone viewport.
-    minWidth: 0,
-    flexWrap: 'wrap',
-  },
   loadingWrap: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    rowGap: '12px',
-    paddingTop: '48px',
-    paddingBottom: '48px',
+    rowGap: tokens.spacingVerticalM,
+    paddingTop: tokens.spacingVerticalXXXL,
+    paddingBottom: tokens.spacingVerticalXXXL,
   },
-  inlineLoading: { display: 'inline-flex', alignItems: 'center', columnGap: '8px' },
-  surface: { borderRadius: gradlyTokens.radiusCard, maxWidth: '480px' },
-  // Fluent's step rail: a row of segments that fill as the user advances.
-  stepRail: { display: 'flex', alignItems: 'center', columnGap: '6px' },
-  stepSeg: {
-    height: '4px',
-    width: '40px',
-    borderRadius: gradlyTokens.radiusPill,
-    backgroundColor: gradlyTokens.ink100,
-    transitionProperty: 'background-color',
-    transitionDuration: '200ms',
+  inlineLoading: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    columnGap: tokens.spacingHorizontalS,
   },
-  stepSegDone: { backgroundColor: gradlyTokens.amber },
-  stepMeta: {
-    fontFamily: gradlyTokens.fontFamilyMono,
-    fontSize: '10px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.18em',
-    color: gradlyTokens.ink500,
+  stepper: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalXS },
+  stepperMeta: { color: tokens.colorNeutralForeground3 },
+  /**
+   * Fluent has no destructive Button appearance, so the primary button is
+   * repainted with Fluent's own danger palette tokens rather than a hand-picked
+   * red — hover/pressed stay in the same family.
+   */
+  destructive: {
+    backgroundColor: tokens.colorPaletteRedBackground3,
+    ...shorthands.borderColor('transparent'),
+    color: tokens.colorNeutralForegroundOnBrand,
+    ':hover': {
+      backgroundColor: tokens.colorPaletteRedForeground1,
+      color: tokens.colorNeutralForegroundOnBrand,
+    },
+    ':hover:active': {
+      backgroundColor: tokens.colorPaletteRedForeground1,
+      color: tokens.colorNeutralForegroundOnBrand,
+    },
   },
 })
 
@@ -144,7 +142,7 @@ export function MessageBanner({
 }) {
   const s = useStyles()
   return (
-    <MessageBar intent={intent} className={mergeClasses(s.bar, className)}>
+    <MessageBar intent={intent} className={className}>
       <MessageBarBody>
         {title && <MessageBarTitle>{title}</MessageBarTitle>}
         {children}
@@ -158,7 +156,7 @@ export function MessageBanner({
                 icon={<DismissRegular />}
                 onClick={onDismiss}
                 label="Dismiss"
-                size="sm"
+                size="small"
               />
             ) : undefined
           }
@@ -222,7 +220,7 @@ export function ConfirmDialog({
   const s = useStyles()
   return (
     <Dialog open={open} onOpenChange={(_, data) => onOpenChange(data.open)}>
-      <DialogSurface className={s.surface}>
+      <DialogSurface>
         <DialogBody>
           <DialogTitle>{title}</DialogTitle>
           <DialogContent>{children}</DialogContent>
@@ -237,11 +235,7 @@ export function ConfirmDialog({
               onClick={() => onConfirm()}
               disabled={busy}
               icon={busy ? <Spinner size="tiny" /> : undefined}
-              style={
-                destructive
-                  ? { backgroundColor: gradlyTokens.danger, borderColor: 'transparent' }
-                  : undefined
-              }
+              className={destructive ? s.destructive : undefined}
             >
               {confirmLabel}
             </Button>
@@ -255,9 +249,12 @@ export function ConfirmDialog({
 /* ─────────────────────────── Stepper ─────────────────────────── */
 
 /**
- * The segmented step indicator from the old AppShell header. Reads as
- * "Step 2 of 4 · Course selection" to assistive tech via the label, with the
- * segments marked decorative.
+ * Multi-step progress indicator.
+ *
+ * Fluent's `ProgressBar` with a caption, rather than the custom segmented rail
+ * this used to be: ProgressBar already carries `role="progressbar"` with the
+ * correct `aria-valuenow`/`valuemin`/`valuemax`, so assistive tech reads the
+ * position without a parallel text-only description.
  */
 export function Stepper({
   step,
@@ -270,20 +267,19 @@ export function Stepper({
 }) {
   const s = useStyles()
   return (
-    <Stack direction="row" align="center" gap={12}>
-      <div className={s.stepRail} aria-hidden>
-        {Array.from({ length: totalSteps }).map((_, i) => (
-          <span
-            key={i}
-            className={mergeClasses(s.stepSeg, i < step && s.stepSegDone)}
-          />
-        ))}
-      </div>
-      <span className={s.stepMeta}>
+    <div className={s.stepper}>
+      <ProgressBar
+        value={step / totalSteps}
+        max={1}
+        thickness="medium"
+        shape="rounded"
+        aria-label={`Step ${step} of ${totalSteps}${label ? `: ${label}` : ''}`}
+      />
+      <Caption1 className={s.stepperMeta}>
         Step {step} of {totalSteps}
         {label ? ` · ${label}` : ''}
-      </span>
-    </Stack>
+      </Caption1>
+    </div>
   )
 }
 

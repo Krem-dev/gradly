@@ -1,58 +1,54 @@
 import type { BrandVariants } from '@fluentui/react-components'
 
 /**
- * Gradly brand ramp.
+ * Fluent's own brand ramps, re-exported so the theme reads from one place.
  *
- * Fluent expects 16 perceptual steps, 10 (darkest) → 160 (lightest). This ramp is
- * generated in HSL with a tuned lightness curve and a slight hue drift (228° at the
- * dark end → 240° at the light end) so it stays smooth instead of banding.
+ * These are Microsoft's shipped ramps, not a Gradly-tinted copy. Fluent derives
+ * roughly 460 colour slots from whichever ramp the theme is built with — every
+ * hover, pressed, selected, disabled and inverted state included — so using an
+ * official ramp is what makes the rest of the palette internally consistent.
  *
- * Two anchors keep it tied to the old design:
- *   - shade 80  = #4F46E5 — the legacy `indigo` DEFAULT. Fluent maps shade 80 to
- *     `colorBrandBackground`, so primary buttons/links land on exactly the old indigo.
- *   - shade 20  ≈ #0B133D — within a hair of the legacy `ink-900` (#0B1437), so dark
- *     sections keep the same navy without a second ramp.
+ * `brandWeb` is the Fluent default (the blue at shade 80, #0f6cbd).
+ * `brandTeams` is the Teams purple (#5b5fc7), if a warmer brand is wanted later.
  *
- * Do not hand-edit single steps: regenerate the whole ramp, or the curve breaks and
- * hover/pressed states (shades 70/40) stop reading as the same colour family.
+ * Swapping brand is a one-line change in `theme.ts` — nothing else references a
+ * brand colour directly.
  */
-export const gradlyBrand: BrandVariants = {
-  10: '#080E26',
-  20: '#0B133D',
-  30: '#0E1753',
-  40: '#11186F',
-  50: '#141B8F',
-  60: '#191CB3',
-  70: '#221FDB',
-  80: '#4F46E5',
-  90: '#675DE9',
-  100: '#7F78ED',
-  110: '#9892F2',
-  120: '#ACA8F5',
-  130: '#C1BEF9',
-  140: '#D1D0FB',
-  150: '#E0E0FD',
-  160: '#EEEEFE',
+
+export const brandWeb: BrandVariants = {
+  10: '#061724',
+  20: '#082338',
+  30: '#0a2e4a',
+  40: '#0c3b5e',
+  50: '#0e4775',
+  60: '#0f548c',
+  70: '#115ea3',
+  80: '#0f6cbd',
+  90: '#2886de',
+  100: '#479ef5',
+  110: '#62abf5',
+  120: '#77b7f7',
+  130: '#96c6fa',
+  140: '#b4d6fa',
+  150: '#cfe4fa',
+  160: '#ebf3fc',
 }
 
-/**
- * Amber accent ramp. Fluent only supports ONE brand ramp per theme, so amber lives
- * outside the theme object as custom tokens (see `tokens.ts`). It carries the same
- * role it did before: focus rings, the dot in a section label, the arrow pill inside
- * a primary button, "needs attention" states.
- */
-export const gradlyAmber = {
-  10: '#2A1A00',
-  20: '#452B00',
-  30: '#613C00',
-  40: '#7D4E00',
-  50: '#9A6000',
-  60: '#B87300',
-  70: '#D97706',
-  80: '#F59E0B',
-  90: '#FBBF24',
-  100: '#FCD34D',
-  110: '#FDE68A',
-  120: '#FEF3C7',
-  130: '#FFFBEB',
-} as const
+export const brandTeams: BrandVariants = {
+  10: '#2b2b40',
+  20: '#2f2f4a',
+  30: '#333357',
+  40: '#383966',
+  50: '#3d3e78',
+  60: '#444791',
+  70: '#4f52b2',
+  80: '#5b5fc7',
+  90: '#7579eb',
+  100: '#7f85f5',
+  110: '#9299f7',
+  120: '#aab1fa',
+  130: '#b6bcfa',
+  140: '#c5cbfa',
+  150: '#dce0fa',
+  160: '#e8ebfa',
+}

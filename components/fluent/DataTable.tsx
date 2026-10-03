@@ -13,41 +13,32 @@ import {
   SkeletonItem,
   makeStyles,
   mergeClasses,
+  shorthands,
   tokens,
   type TableColumnDefinition,
   type DataGridProps,
-  shorthands,
 } from '@fluentui/react-components'
-import { gradlyTokens } from '@/lib/fluent'
 import { EmptyState } from './Card'
 import { Stack } from './Layout'
 
 const useStyles = makeStyles({
+  // The only styling here is a scroll container. Fluent's DataGrid has no
+  // built-in overflow handling, and a wide table must scroll inside its own
+  // box rather than widening the page.
   shell: {
-    ...shorthands.border('1px', 'solid', gradlyTokens.ink100),
-    borderRadius: tokens.borderRadiusXLarge,
+    ...shorthands.border(tokens.strokeWidthThin, 'solid', tokens.colorNeutralStroke2),
+    borderRadius: tokens.borderRadiusMedium,
     overflowX: 'auto',
     backgroundColor: tokens.colorNeutralBackground1,
   },
   grid: { minWidth: '100%' },
-  header: {
-    backgroundColor: gradlyTokens.ink50,
-    // Fluent's header cells use the body type ramp; the Gradly tables use the
-    // same mono eyebrow as field labels so headers read as metadata, not data.
-    '& .fui-DataGridHeaderCell__button': {
-      fontFamily: gradlyTokens.fontFamilyMono,
-      fontSize: '10px',
-      textTransform: 'uppercase',
-      letterSpacing: '0.16em',
-      color: gradlyTokens.ink500,
-      fontWeight: '400',
-    },
+  numeric: { fontVariantNumeric: 'tabular-nums' },
+  skeletonRow: {
+    paddingTop: tokens.spacingVerticalM,
+    paddingBottom: tokens.spacingVerticalM,
+    paddingLeft: tokens.spacingHorizontalM,
+    paddingRight: tokens.spacingHorizontalM,
   },
-  row: {
-    ':hover': { backgroundColor: gradlyTokens.ink50 },
-  },
-  numeric: { fontVariantNumeric: 'tabular-nums', fontFamily: gradlyTokens.fontFamilyMono },
-  skeletonRow: { padding: '14px 16px' },
 })
 
 export type DataTableColumn<T> = {
@@ -165,7 +156,7 @@ export function DataTable<T>({
         columnSizingOptions={columnSizingOptions}
         className={s.grid}
       >
-        <DataGridHeader className={s.header}>
+        <DataGridHeader>
           <DataGridRow>
             {({ renderHeaderCell }) => (
               <DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
@@ -174,7 +165,7 @@ export function DataTable<T>({
         </DataGridHeader>
         <DataGridBody<T>>
           {({ item, rowId }) => (
-            <DataGridRow<T> key={rowId} className={s.row}>
+            <DataGridRow<T> key={rowId}>
               {({ renderCell }) => <DataGridCell>{renderCell(item)}</DataGridCell>}
             </DataGridRow>
           )}

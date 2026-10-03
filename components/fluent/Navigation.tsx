@@ -23,6 +23,7 @@ import {
   MenuList,
   MenuItem,
   Avatar,
+  Subtitle2,
   Tooltip,
   makeStyles,
   mergeClasses,
@@ -35,7 +36,6 @@ import {
   WeatherSunnyRegular,
   SignOutRegular,
 } from '@fluentui/react-icons'
-import { gradlyTokens, hoverTransition } from '@/lib/fluent'
 import { IconButton } from './Button'
 import { useGradlyTheme } from './GradlyProvider'
 import { Body } from './Text'
@@ -44,118 +44,52 @@ import { Container, Stack } from './Layout'
 const useStyles = makeStyles({
   header: {
     width: '100%',
-    borderBottomWidth: '1px',
+    borderBottomWidth: tokens.strokeWidthThin,
     borderBottomStyle: 'solid',
-    borderBottomColor: gradlyTokens.ink100,
+    borderBottomColor: tokens.colorNeutralStroke2,
     backgroundColor: tokens.colorNeutralBackground1,
-    paddingTop: '16px',
-    paddingBottom: '16px',
-    '@media (min-width: 1024px)': { paddingTop: '22px', paddingBottom: '22px' },
+    paddingTop: tokens.spacingVerticalM,
+    paddingBottom: tokens.spacingVerticalM,
   },
-  sticky: {
-    position: 'sticky',
-    top: '0',
-    zIndex: 40,
-    backdropFilter: 'saturate(180%) blur(12px)',
-  },
+  sticky: { position: 'sticky', top: 0, zIndex: 40 },
 
-  // ── Logo ──────────────────────────────────────────────────────────────────
   logo: {
     display: 'inline-flex',
     alignItems: 'center',
-    columnGap: '10px',
+    columnGap: tokens.spacingHorizontalS,
     textDecorationLine: 'none',
     color: 'inherit',
+    flexShrink: 0,
   },
-  mark: {
-    position: 'relative',
-    display: 'inline-flex',
-  },
-  markGlyph: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '36px',
-    height: '36px',
-    borderRadius: tokens.borderRadiusXLarge,
-    backgroundColor: gradlyTokens.ink900,
-    color: gradlyTokens.surface,
-    fontFamily: gradlyTokens.fontFamilyDisplay,
-    fontSize: '20px',
-    lineHeight: '1',
-  },
-  markDot: {
-    position: 'absolute',
-    bottom: '-2px',
-    right: '-2px',
-    width: '8px',
-    height: '8px',
-    borderRadius: gradlyTokens.radiusPill,
-    backgroundColor: gradlyTokens.amber,
-  },
-  wordmark: {
-    fontSize: tokens.fontSizeBase400,
-    fontWeight: '600',
-    letterSpacing: '-0.02em',
-    color: gradlyTokens.ink900,
-  },
+  wordmark: { color: tokens.colorNeutralForeground1 },
 
-  // ── Links ─────────────────────────────────────────────────────────────────
   navLink: {
     textDecorationLine: 'none',
-    color: gradlyTokens.ink500,
-    fontSize: tokens.fontSizeBase300,
-    transition: hoverTransition,
-    ':hover': { color: gradlyTokens.ink900 },
+    color: tokens.colorNeutralForeground2,
+    ':hover': { color: tokens.colorNeutralForeground1 },
   },
-  hideOnMobile: { display: 'none', '@media (min-width: 768px)': { display: 'inline-flex' } },
-  // The right-hand cluster must be allowed to shrink; without `minWidth: 0` a
-  // flex child refuses to go below its content width and pushes the page wider.
+  hideOnMobile: {
+    display: 'none',
+    '@media (min-width: 768px)': { display: 'inline-flex' },
+  },
+  hideOnDesktop: {
+    display: 'inline-flex',
+    '@media (min-width: 768px)': { display: 'none' },
+  },
+  // Without `minWidth: 0` a flex child refuses to shrink below its content
+  // width and pushes the page wider than the viewport.
   headerActions: { minWidth: 0, flexShrink: 1 },
-  headerLogo: { flexShrink: 0 },
-  hideOnDesktop: { display: 'inline-flex', '@media (min-width: 768px)': { display: 'none' } },
 
-  // ── Tabs ──────────────────────────────────────────────────────────────────
-  tabs: {
-    // Fluent's default indicator is a short bar; widen it to the full tab so it
-    // reads as a section switch rather than a text underline.
-    '& .fui-Tab__content': { fontWeight: '500' },
-  },
-
-  // ── Accordion (FAQ) ───────────────────────────────────────────────────────
-  accordion: { width: '100%' },
-  accordionItem: {
-    borderBottomWidth: '1px',
-    borderBottomStyle: 'solid',
-    borderBottomColor: gradlyTokens.ink100,
-  },
-  accordionHeader: {
-    '& .fui-AccordionHeader__button': {
-      paddingTop: '20px',
-      paddingBottom: '20px',
-      paddingLeft: '0',
-      paddingRight: '0',
-      fontSize: tokens.fontSizeBase500,
-      fontWeight: '500',
-      letterSpacing: '-0.01em',
-      color: gradlyTokens.ink900,
-    },
-  },
-  accordionPanel: {
-    marginLeft: '0',
-    paddingBottom: '20px',
-    paddingRight: '40px',
-    color: gradlyTokens.ink500,
-  },
+  accordionPanel: { color: tokens.colorNeutralForeground2 },
   drawerLink: {
     display: 'block',
-    padding: '14px 0',
+    paddingTop: tokens.spacingVerticalM,
+    paddingBottom: tokens.spacingVerticalM,
     textDecorationLine: 'none',
-    fontSize: tokens.fontSizeBase500,
-    color: gradlyTokens.ink900,
-    borderBottomWidth: '1px',
+    color: tokens.colorNeutralForeground1,
+    borderBottomWidth: tokens.strokeWidthThin,
     borderBottomStyle: 'solid',
-    borderBottomColor: gradlyTokens.ink100,
+    borderBottomColor: tokens.colorNeutralStroke2,
   },
 })
 
@@ -164,29 +98,23 @@ const useStyles = makeStyles({
 export function Logo({
   href = '/',
   showWordmark = true,
-  inverted = false,
 }: {
   href?: string
   showWordmark?: boolean
-  inverted?: boolean
 }) {
   const s = useStyles()
   return (
     <a href={href} className={s.logo} aria-label="Gradly home">
-      <span className={s.mark}>
-        <span
-          className={s.markGlyph}
-          style={
-            inverted
-              ? { backgroundColor: '#FFFFFF', color: 'var(--gradly-ink-900)' }
-              : undefined
-          }
-        >
-          G
-        </span>
-        <span className={s.markDot} aria-hidden />
-      </span>
-      {showWordmark && <span className={s.wordmark}>Gradly</span>}
+      <Avatar
+        name="Gradly"
+        initials="G"
+        shape="square"
+        size={32}
+        active="unset"
+        color="brand"
+        aria-hidden
+      />
+      {showWordmark && <Subtitle2 className={s.wordmark}>Gradly</Subtitle2>}
     </a>
   )
 }
@@ -354,7 +282,6 @@ export function TabsBar({
   const s = useStyles()
   return (
     <TabList
-      className={s.tabs}
       selectedValue={value}
       onTabSelect={(_, data) => onValueChange(data.value as string)}
       size={size}
@@ -413,13 +340,12 @@ export function FaqAccordion({
   const s = useStyles()
   return (
     <Accordion
-      className={s.accordion}
       collapsible={collapsible}
       defaultOpenItems={defaultOpen >= 0 ? [defaultOpen] : []}
     >
       {items.map((item, i) => (
-        <AccordionItem key={i} value={i} className={s.accordionItem}>
-          <AccordionHeader className={s.accordionHeader} expandIconPosition="end">
+        <AccordionItem key={i} value={i}>
+          <AccordionHeader expandIconPosition="end">
             {item.question}
           </AccordionHeader>
           <AccordionPanel className={s.accordionPanel}>

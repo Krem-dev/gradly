@@ -1,59 +1,60 @@
 'use client'
 
-import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
-import { gradlyTokens } from '@/lib/fluent'
+import { makeStyles, mergeClasses, tokens, Divider } from '@fluentui/react-components'
+
+/**
+ * Layout primitives.
+ *
+ * **These are not Fluent components** — Fluent v9 deliberately ships no layout
+ * system (the v8 `Stack` was dropped in favour of plain CSS). They are written
+ * with griffel (`makeStyles`, the same engine Fluent itself uses) and spaced
+ * entirely with Fluent's spacing tokens, so they stay in step with the theme
+ * rather than introducing a second scale.
+ *
+ * Section tones map onto Fluent's neutral background ramp — no custom colours.
+ */
 
 const useStyles = makeStyles({
-  // ── Container ─────────────────────────────────────────────────────────────
   container: {
     marginLeft: 'auto',
     marginRight: 'auto',
     width: '100%',
-    paddingLeft: '20px',
-    paddingRight: '20px',
-    '@media (min-width: 640px)': { paddingLeft: '32px', paddingRight: '32px' },
-    '@media (min-width: 1024px)': { paddingLeft: '40px', paddingRight: '40px' },
+    paddingLeft: tokens.spacingHorizontalL,
+    paddingRight: tokens.spacingHorizontalL,
+    '@media (min-width: 640px)': {
+      paddingLeft: tokens.spacingHorizontalXXL,
+      paddingRight: tokens.spacingHorizontalXXL,
+    },
   },
   narrow: { maxWidth: '768px' },
   default: { maxWidth: '1152px' },
   wide: { maxWidth: '1280px' },
   full: { maxWidth: '1600px' },
 
-  // ── Section ───────────────────────────────────────────────────────────────
   section: {
     position: 'relative',
     width: '100%',
-    paddingTop: '80px',
-    paddingBottom: '80px',
-    '@media (min-width: 768px)': { paddingTop: '128px', paddingBottom: '128px' },
+    paddingTop: '64px',
+    paddingBottom: '64px',
+    '@media (min-width: 768px)': { paddingTop: '96px', paddingBottom: '96px' },
   },
   sectionTight: {
-    paddingTop: '48px',
-    paddingBottom: '48px',
-    '@media (min-width: 768px)': { paddingTop: '64px', paddingBottom: '64px' },
+    paddingTop: '32px',
+    paddingBottom: '32px',
+    '@media (min-width: 768px)': { paddingTop: '48px', paddingBottom: '48px' },
   },
-  toneSurface: { backgroundColor: gradlyTokens.surface, color: gradlyTokens.ink800 },
-  toneAlt: { backgroundColor: gradlyTokens.surfaceAlt, color: gradlyTokens.ink800 },
-  toneMuted: { backgroundColor: gradlyTokens.surfaceMuted, color: gradlyTokens.ink800 },
-  toneInk: {
-    backgroundColor: gradlyTokens.surfaceInk,
-    color: '#FFFFFF',
-    // Re-point the ink scale so children written against `ink800` invert here
-    // with no `tone` prop threading. This is the whole reason the custom tokens
-    // are CSS properties rather than a JS object.
-    '--gradly-ink-900': '#FFFFFF',
-    '--gradly-ink-800': '#E2E8F0',
-    '--gradly-ink-700': '#CBD5E1',
-    '--gradly-ink-600': '#94A3B8',
-    '--gradly-ink-500': '#94A3B8',
-    '--gradly-ink-400': '#64748B',
-    '--gradly-ink-300': '#475569',
-    '--gradly-ink-200': '#334155',
-    '--gradly-ink-100': 'rgba(255,255,255,0.12)',
-    '--gradly-ink-50': 'rgba(255,255,255,0.06)',
+  tone1: { backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1 },
+  tone2: { backgroundColor: tokens.colorNeutralBackground2, color: tokens.colorNeutralForeground1 },
+  tone3: { backgroundColor: tokens.colorNeutralBackground3, color: tokens.colorNeutralForeground1 },
+  toneInverted: {
+    backgroundColor: tokens.colorNeutralBackgroundInverted,
+    color: tokens.colorNeutralForegroundInverted,
+  },
+  toneBrand: {
+    backgroundColor: tokens.colorBrandBackground2,
+    color: tokens.colorNeutralForeground1,
   },
 
-  // ── Stack ─────────────────────────────────────────────────────────────────
   stack: { display: 'flex', minWidth: 0 },
   row: { flexDirection: 'row' },
   col: { flexDirection: 'column' },
@@ -67,46 +68,7 @@ const useStyles = makeStyles({
   justifyEnd: { justifyContent: 'flex-end' },
   justifyBetween: { justifyContent: 'space-between' },
 
-  // ── Grid ──────────────────────────────────────────────────────────────────
   grid: { display: 'grid', minWidth: 0 },
-
-  // ── Page background decoration ────────────────────────────────────────────
-  bgHost: { position: 'relative', isolation: 'isolate' },
-  bgLayer: {
-    position: 'absolute',
-    inset: '0',
-    pointerEvents: 'none',
-    zIndex: -1,
-    overflowX: 'hidden',
-    overflowY: 'hidden',
-  },
-  bgGrid: {
-    position: 'absolute',
-    inset: '0',
-    opacity: '0.04',
-    backgroundImage: `linear-gradient(to right, ${gradlyTokens.ink900} 1px, transparent 1px), linear-gradient(to bottom, ${gradlyTokens.ink900} 1px, transparent 1px)`,
-    backgroundSize: '64px 64px',
-  },
-  bgGlowAmber: {
-    position: 'absolute',
-    width: '460px',
-    height: '460px',
-    borderRadius: '9999px',
-    backgroundColor: gradlyTokens.amber,
-    opacity: '0.14',
-    filter: 'blur(140px)',
-  },
-  bgGlowBrand: {
-    position: 'absolute',
-    width: '520px',
-    height: '520px',
-    borderRadius: '9999px',
-    backgroundColor: tokens.colorBrandBackground,
-    opacity: '0.12',
-    filter: 'blur(150px)',
-  },
-  glowTopRight: { top: '-180px', right: '-120px' },
-  glowBottomLeft: { bottom: '-200px', left: '-140px' },
 })
 
 type ContainerSize = 'narrow' | 'default' | 'wide' | 'full'
@@ -123,16 +85,15 @@ export function Container({
   as?: 'div' | 'main' | 'header' | 'footer' | 'section'
 }) {
   const s = useStyles()
-  return (
-    <Tag className={mergeClasses(s.container, s[size], className)}>{children}</Tag>
-  )
+  return <Tag className={mergeClasses(s.container, s[size], className)}>{children}</Tag>
 }
 
-export type SectionTone = 'surface' | 'alt' | 'muted' | 'ink'
+/** Fluent neutral background steps, named by role rather than by number. */
+export type SectionTone = 'default' | 'subtle' | 'muted' | 'inverted' | 'brand'
 
 export function Section({
   children,
-  tone = 'surface',
+  tone = 'default',
   tight = false,
   id,
   className,
@@ -145,10 +106,11 @@ export function Section({
 }) {
   const s = useStyles()
   const toneClass = {
-    surface: s.toneSurface,
-    alt: s.toneAlt,
-    muted: s.toneMuted,
-    ink: s.toneInk,
+    default: s.tone1,
+    subtle: s.tone2,
+    muted: s.tone3,
+    inverted: s.toneInverted,
+    brand: s.toneBrand,
   }[tone]
   return (
     <section
@@ -160,14 +122,10 @@ export function Section({
   )
 }
 
-/**
- * Flex helper. Fluent has no layout primitive in v9 (the v8 `Stack` was dropped in
- * favour of CSS), so this fills the gap without pulling a second styling system in.
- */
 export function Stack({
   children,
   direction = 'column',
-  gap = 12,
+  gap = 'M',
   align,
   justify,
   wrap = false,
@@ -177,7 +135,8 @@ export function Stack({
 }: {
   children: React.ReactNode
   direction?: 'row' | 'column'
-  gap?: number
+  /** A Fluent spacing step, or an explicit pixel number. */
+  gap?: 'None' | 'XXS' | 'XS' | 'SNudge' | 'S' | 'MNudge' | 'M' | 'L' | 'XL' | 'XXL' | 'XXXL' | number
   align?: 'start' | 'center' | 'end' | 'stretch'
   justify?: 'start' | 'center' | 'end' | 'between'
   wrap?: boolean
@@ -186,6 +145,11 @@ export function Stack({
   as?: 'div' | 'li' | 'ul' | 'nav' | 'form'
 }) {
   const s = useStyles()
+  const gapValue =
+    typeof gap === 'number'
+      ? `${gap}px`
+      : (tokens[`spacingVertical${gap}` as keyof typeof tokens] as string)
+
   return (
     <Tag
       className={mergeClasses(
@@ -202,7 +166,7 @@ export function Stack({
         justify === 'between' && s.justifyBetween,
         className
       )}
-      style={{ gap: `${gap}px`, ...style }}
+      style={{ gap: gapValue, ...style }}
     >
       {children}
     </Tag>
@@ -210,13 +174,13 @@ export function Stack({
 }
 
 /**
- * Responsive grid. `min` is the smallest a column may get before the track count
- * drops — `auto-fit` + `minmax` means no breakpoint list to maintain.
+ * Responsive grid. `min` is the narrowest a column may get before the track
+ * count drops — `auto-fit` + `minmax` means no breakpoint list to maintain.
  */
 export function Grid({
   children,
   min = 260,
-  gap = 20,
+  gap = 16,
   columns,
   className,
   style,
@@ -224,7 +188,6 @@ export function Grid({
   children: React.ReactNode
   min?: number
   gap?: number
-  /** Fixed column count. Omit for auto-fit behaviour. */
   columns?: number
   className?: string
   style?: React.CSSProperties
@@ -246,37 +209,4 @@ export function Grid({
   )
 }
 
-/**
- * Decorative page background: faint graph-paper grid plus one or two colour glows.
- * Sits on its own `z-index: -1` layer inside an isolated stacking context, so it
- * can never intercept clicks or paint over content.
- */
-export function PageBackground({
-  children,
-  grid = true,
-  glow = 'amber',
-  className,
-}: {
-  children: React.ReactNode
-  grid?: boolean
-  glow?: 'amber' | 'brand' | 'both' | 'none'
-  className?: string
-}) {
-  const s = useStyles()
-  return (
-    <div className={mergeClasses(s.bgHost, className)}>
-      <div className={s.bgLayer} aria-hidden>
-        {grid && <div className={s.bgGrid} />}
-        {(glow === 'amber' || glow === 'both') && (
-          <div className={mergeClasses(s.bgGlowAmber, s.glowTopRight)} />
-        )}
-        {(glow === 'brand' || glow === 'both') && (
-          <div className={mergeClasses(s.bgGlowBrand, s.glowBottomLeft)} />
-        )}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-export { Divider } from '@fluentui/react-components'
+export { Divider }

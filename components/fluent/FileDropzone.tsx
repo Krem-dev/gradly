@@ -9,6 +9,8 @@ import {
   mergeClasses,
   tokens,
   shorthands,
+  Caption1,
+  Body1Strong,
 } from '@fluentui/react-components'
 import {
   ArrowUploadRegular,
@@ -16,78 +18,83 @@ import {
   ImageRegular,
   DismissRegular,
 } from '@fluentui/react-icons'
-import { gradlyTokens, hoverTransition } from '@/lib/fluent'
 import { IconButton } from './Button'
-import { Body, Kicker } from './Text'
+import { Body } from './Text'
 import { Stack } from './Layout'
 
 const useStyles = makeStyles({
+  /**
+   * Fluent has no dropzone component, so the chrome here is custom — but every
+   * value comes from a Fluent token, and the interactive parts (the browse
+   * button, the progress bar, the validation message) are Fluent components.
+   */
   zone: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    rowGap: '12px',
-    paddingTop: '40px',
-    paddingBottom: '40px',
-    paddingLeft: '24px',
-    paddingRight: '24px',
+    rowGap: tokens.spacingVerticalM,
+    paddingTop: tokens.spacingVerticalXXXL,
+    paddingBottom: tokens.spacingVerticalXXXL,
+    paddingLeft: tokens.spacingHorizontalXL,
+    paddingRight: tokens.spacingHorizontalXL,
     textAlign: 'center',
-    borderRadius: tokens.borderRadiusXLarge,
-    ...shorthands.border('2px', 'dashed', gradlyTokens.ink200),
-    backgroundColor: gradlyTokens.surfaceAlt,
-    transition: hoverTransition,
+    borderRadius: tokens.borderRadiusMedium,
+    ...shorthands.border(tokens.strokeWidthThick, 'dashed', tokens.colorNeutralStroke2),
+    backgroundColor: tokens.colorNeutralBackground2,
     cursor: 'pointer',
     ':hover': {
-      ...shorthands.borderColor(gradlyTokens.ink400),
-      backgroundColor: gradlyTokens.ink50,
+      backgroundColor: tokens.colorNeutralBackground2Hover,
+      ...shorthands.borderColor(tokens.colorNeutralStroke1),
     },
     ':focus-visible': {
-      outlineWidth: '2px',
+      outlineWidth: tokens.strokeWidthThick,
       outlineStyle: 'solid',
-      outlineColor: gradlyTokens.amber,
+      outlineColor: tokens.colorStrokeFocus2,
       outlineOffset: '2px',
     },
   },
   dragging: {
-    ...shorthands.borderColor(tokens.colorBrandBackground),
+    ...shorthands.borderColor(tokens.colorBrandStroke1),
     backgroundColor: tokens.colorBrandBackground2,
   },
-  invalid: { ...shorthands.borderColor(gradlyTokens.danger) },
+  invalid: { ...shorthands.borderColor(tokens.colorPaletteRedBorder2) },
   icon: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '48px',
-    height: '48px',
-    borderRadius: gradlyTokens.radiusPill,
-    backgroundColor: gradlyTokens.ink900,
-    color: '#FFFFFF',
-    fontSize: '20px',
+    width: '44px',
+    height: '44px',
+    borderRadius: tokens.borderRadiusCircular,
+    backgroundColor: tokens.colorBrandBackground,
+    color: tokens.colorNeutralForegroundOnBrand,
+    fontSize: tokens.fontSizeBase500,
   },
   hiddenInput: {
     position: 'absolute',
     width: '1px',
     height: '1px',
-    opacity: '0',
+    opacity: 0,
     pointerEvents: 'none',
   },
   filecard: {
     display: 'flex',
     alignItems: 'center',
-    columnGap: '12px',
-    padding: '14px 16px',
-    borderRadius: tokens.borderRadiusLarge,
-    ...shorthands.border('1px', 'solid', gradlyTokens.ink100),
+    columnGap: tokens.spacingHorizontalM,
+    paddingTop: tokens.spacingVerticalM,
+    paddingBottom: tokens.spacingVerticalM,
+    paddingLeft: tokens.spacingHorizontalM,
+    paddingRight: tokens.spacingHorizontalM,
+    borderRadius: tokens.borderRadiusMedium,
+    ...shorthands.border(tokens.strokeWidthThin, 'solid', tokens.colorNeutralStroke2),
     backgroundColor: tokens.colorNeutralBackground1,
   },
-  fileIcon: { fontSize: '24px', color: tokens.colorBrandForeground1, flexShrink: 0 },
+  fileIcon: { fontSize: tokens.fontSizeBase600, color: tokens.colorBrandForeground1, flexShrink: 0 },
   fileMeta: { minWidth: 0, flexGrow: 1 },
   fileName: {
     whiteSpace: 'nowrap',
     overflowX: 'hidden',
     textOverflow: 'ellipsis',
-    fontWeight: '500',
   },
 })
 
@@ -176,8 +183,8 @@ export function FileDropzone({
             {isPdf ? <DocumentPdfRegular /> : <ImageRegular />}
           </span>
           <div className={s.fileMeta}>
-            <div className={s.fileName}>{file.name}</div>
-            <Kicker>{formatBytes(file.size)}</Kicker>
+            <Body1Strong className={s.fileName} block>{file.name}</Body1Strong>
+            <Caption1>{formatBytes(file.size)}</Caption1>
           </div>
           {onClear && (
             <IconButton icon={<DismissRegular />} onClick={onClear} label="Remove file" />
@@ -228,9 +235,7 @@ export function FileDropzone({
         <span className={s.icon} aria-hidden>
           <ArrowUploadRegular />
         </span>
-        <Body>
-          <strong>Drop your transcript here</strong>
-        </Body>
+        <Body1Strong>Drop your transcript here</Body1Strong>
         <Body muted>PDF, JPG or PNG · up to {formatBytes(maxBytes)}</Body>
         <input
           ref={inputRef}

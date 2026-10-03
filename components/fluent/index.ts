@@ -2,22 +2,29 @@
  * Gradly Fluent UI component library — single import surface.
  *
  * Pages import from '@/components/fluent' only, never from
- * '@fluentui/react-components' directly. That keeps restyling, swapping or
- * wrapping a Fluent primitive a one-file change instead of a repo-wide search.
+ * '@fluentui/react-components' directly, so swapping or wrapping a Fluent
+ * primitive stays a one-file change.
+ *
+ * Three kinds of export live here, and the distinction matters:
+ *
+ *   1. Re-exported Fluent components, unchanged. Most of the list.
+ *   2. Thin wrappers that pair a Fluent `Field` with a Fluent control, or add
+ *      something Fluent leaves to the app (a loading button, client-side `href`).
+ *      No restyling.
+ *   3. Compositions for patterns Fluent has no component for — layout, the
+ *      dropzone, the OTP input, scroll motion. These are built from Fluent parts
+ *      and Fluent tokens, and are marked as such in their own files.
  */
 
 // ── Provider + theme ────────────────────────────────────────────────────────
 export { GradlyProvider, useGradlyTheme } from './GradlyProvider'
 export { FluentSSR } from './FluentSSR'
 
-// ── Typography ──────────────────────────────────────────────────────────────
+// ── Typography (all Fluent) ─────────────────────────────────────────────────
 export {
+  Text,
   Display,
-  Lead,
-  Body,
-  Kicker,
-  Stat,
-  GradlyText,
+  LargeTitle,
   Title1,
   Title2,
   Title3,
@@ -25,56 +32,63 @@ export {
   Subtitle2,
   Body1,
   Body1Strong,
+  Body1Stronger,
   Body2,
   Caption1,
   Caption1Strong,
-  LargeTitle,
+  Caption1Stronger,
+  Caption2,
+  Caption2Strong,
+  // Conventions composed from the above
+  Lead,
+  Body,
+  Stat,
 } from './Text'
-export type { DisplayProps } from './Text'
 
-// ── Layout ──────────────────────────────────────────────────────────────────
-export { Container, Section, Stack, Grid, PageBackground, Divider } from './Layout'
+// ── Layout (composition — Fluent ships no layout system) ────────────────────
+export { Container, Section, Stack, Grid, Divider } from './Layout'
 export type { SectionTone } from './Layout'
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 export {
   GradlyButton,
   IconButton,
+  Button,
   ToggleButton,
   MenuButton,
   SplitButton,
   CompoundButton,
+  Link,
 } from './Button'
-export type {
-  GradlyButtonProps,
-  GradlyButtonSize,
-  GradlyButtonVariant,
-} from './Button'
+export type { GradlyButtonProps } from './Button'
 
 // ── Surfaces ────────────────────────────────────────────────────────────────
 export {
-  GradlyCard,
-  StatTile,
-  EmptyState,
+  Card,
   CardHeader,
   CardFooter,
   CardPreview,
+  StatTile,
+  EmptyState,
 } from './Card'
-export type { GradlyCardProps, GradlyCardTone, GradlyCardPadding } from './Card'
+export type { CardProps } from './Card'
 
 // ── Badges + labels ─────────────────────────────────────────────────────────
 export {
-  GradlyBadge,
-  SectionLabel,
-  StatusDot,
-  CreditsPill,
+  Badge,
   CounterBadge,
   PresenceBadge,
   Avatar,
+  AvatarGroup,
+  AvatarGroupItem,
   Tag,
   TagGroup,
+  InteractionTag,
+  SectionLabel,
+  StatusDot,
+  CreditsPill,
 } from './Badge'
-export type { GradlyBadgeTone } from './Badge'
+export type { BadgeProps } from './Badge'
 
 // ── Inputs ──────────────────────────────────────────────────────────────────
 export {
@@ -88,12 +102,14 @@ export {
   RadioField,
   SliderField,
   OTPField,
-  // Raw Fluent escape hatches for one-off cases
+  // Raw Fluent, for anything the wrappers don't cover
   Field,
+  Label,
   Input,
   Textarea,
   Dropdown,
   Option,
+  OptionGroup,
   Combobox,
   SpinButton,
   Slider,
@@ -112,6 +128,7 @@ export type {
   NumberFieldProps,
   RadioOption,
   SliderFieldProps,
+  FieldProps,
 } from './Inputs'
 
 // ── Data display ────────────────────────────────────────────────────────────
@@ -216,14 +233,12 @@ export {
   motionTokens,
 } from './Motion'
 
-// ── Styling utilities (for page-level one-offs) ─────────────────────────────
-export { makeStyles, mergeClasses, tokens, shorthands } from '@fluentui/react-components'
+// ── Styling utilities, for page-level one-offs ──────────────────────────────
+export { makeStyles, mergeClasses, shorthands, tokens } from '@fluentui/react-components'
 export {
-  gradlyTokens,
-  gradlyMotion,
-  gradlyBrand,
-  gradlyAmber,
+  brandWeb,
+  brandTeams,
   gradlyLightTheme,
   gradlyDarkTheme,
-  hoverTransition,
+  gradlyMotion,
 } from '@/lib/fluent'

@@ -8,18 +8,10 @@ import {
   useMemo,
   useState,
 } from 'react'
-import {
-  FluentProvider,
-  Toaster,
-  makeStyles,
-  useId,
-} from '@fluentui/react-components'
+import { FluentProvider, Toaster, makeStyles, useId } from '@fluentui/react-components'
 import {
   gradlyDarkTheme,
-  gradlyDarkVars,
   gradlyLightTheme,
-  gradlyLightVars,
-  cssVars,
   type GradlyThemeMode,
 } from '@/lib/fluent'
 import { FluentSSR } from './FluentSSR'
@@ -38,9 +30,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function useGradlyTheme() {
   const ctx = useContext(ThemeContext)
-  if (!ctx) {
-    throw new Error('useGradlyTheme must be used inside <GradlyProvider>')
-  }
+  if (!ctx) throw new Error('useGradlyTheme must be used inside <GradlyProvider>')
   return ctx
 }
 
@@ -49,8 +39,6 @@ const useStyles = makeStyles({
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    // FluentProvider renders a plain div; without this it won't stretch and any
-    // full-height page layout inside it collapses.
     width: '100%',
   },
 })
@@ -58,15 +46,13 @@ const useStyles = makeStyles({
 /**
  * The single root every Gradly page mounts inside.
  *
- * Does four jobs:
- *   1. applies the Fluent theme (and therefore all ~460 Fluent colour/type tokens)
- *   2. emits the Gradly custom properties for the ink/amber/display tokens
- *   3. hosts one `<Toaster>` so `useGradlyToast` works from anywhere
- *   4. owns light/dark mode, persisted to localStorage and seeded from the OS
+ * Applies Fluent's web theme (and with it the whole token set), hosts one
+ * `<Toaster>` so `useGradlyToast` works from anywhere, and owns light/dark mode
+ * with the OS preference as the seed and localStorage as the override.
  *
  * Mode resolution runs in an effect rather than during render: reading
- * localStorage or `matchMedia` while rendering would produce different output on
- * the server than the client and React would discard the hydrated tree.
+ * localStorage or `matchMedia` while rendering produces different output on the
+ * server than the client, and React discards the hydrated tree.
  */
 export function GradlyProvider({
   children,
@@ -113,16 +99,12 @@ export function GradlyProvider({
     [mode, setMode, toggle, toasterId]
   )
 
-  const theme = mode === 'dark' ? gradlyDarkTheme : gradlyLightTheme
-  const vars = mode === 'dark' ? gradlyDarkVars : gradlyLightVars
-
   return (
     <ThemeContext.Provider value={value}>
       <FluentSSR>
         <FluentProvider
-          theme={theme}
+          theme={mode === 'dark' ? gradlyDarkTheme : gradlyLightTheme}
           className={styles.root}
-          style={cssVars(vars)}
         >
           {children}
           <Toaster toasterId={toasterId} position="top-end" pauseOnHover />

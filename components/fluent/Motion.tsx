@@ -6,8 +6,9 @@ import {
   motionTokens,
   makeStyles,
   mergeClasses,
+  tokens,
 } from '@fluentui/react-components'
-import { gradlyMotion, gradlyTokens, REVEAL_DISTANCE } from '@/lib/fluent'
+import { gradlyMotion, REVEAL_DISTANCE } from '@/lib/fluent'
 
 /* ─────────────────────── Presence (enter / exit) ─────────────────────── */
 
@@ -135,7 +136,7 @@ const useStyles = makeStyles({
   progressBar: {
     height: '100%',
     transformOrigin: '0 50%',
-    backgroundColor: gradlyTokens.amber,
+    backgroundColor: tokens.colorBrandBackground,
     willChange: 'transform',
   },
 

@@ -12,63 +12,44 @@ import {
   Tooltip,
   makeStyles,
   mergeClasses,
-  tokens,
   shorthands,
+  tokens,
 } from '@fluentui/react-components'
 import { DeleteRegular, AddRegular } from '@fluentui/react-icons'
-import { gradlyTokens } from '@/lib/fluent'
 import { IconButton } from './Button'
-import { Kicker } from './Text'
+import { Caption1 } from '@fluentui/react-components'
 
 const useStyles = makeStyles({
   shell: {
-    ...shorthands.border('1px', 'solid', gradlyTokens.ink100),
-    borderRadius: tokens.borderRadiusXLarge,
+    ...shorthands.border(tokens.strokeWidthThin, 'solid', tokens.colorNeutralStroke2),
+    borderRadius: tokens.borderRadiusMedium,
     overflowX: 'auto',
     backgroundColor: tokens.colorNeutralBackground1,
   },
-  header: { backgroundColor: gradlyTokens.ink50 },
-  headerCell: { paddingTop: '10px', paddingBottom: '10px' },
-  row: {
-    borderTopWidth: '1px',
-    borderTopStyle: 'solid',
-    borderTopColor: gradlyTokens.ink100,
+  cell: {
+    paddingTop: tokens.spacingVerticalXXS,
+    paddingBottom: tokens.spacingVerticalXXS,
+    paddingLeft: tokens.spacingHorizontalXS,
+    paddingRight: tokens.spacingHorizontalXS,
   },
-  cell: { paddingTop: '6px', paddingBottom: '6px', paddingLeft: '8px', paddingRight: '8px' },
-  // Inputs inside a table cell: no border until focus, so a dense grid of fields
-  // doesn't turn into a wall of boxes.
-  cellInput: {
-    width: '100%',
-    minWidth: '0',
-    backgroundColor: 'transparent',
-    ...shorthands.borderColor('transparent'),
-    borderRadius: tokens.borderRadiusMedium,
-    ':hover': {
-      backgroundColor: gradlyTokens.ink50,
-      ...shorthands.borderColor(gradlyTokens.ink100),
-    },
-    ':focus-within': {
-      backgroundColor: tokens.colorNeutralBackground1,
-      outlineWidth: '2px',
-      outlineStyle: 'solid',
-      outlineColor: gradlyTokens.amber,
-      outlineOffset: '0',
-    },
-    '::after': { display: 'none' },
-  },
+  /**
+   * Inputs inside a table cell use Fluent's `transparent` appearance so a dense
+   * grid of fields does not read as a wall of boxes; the focus indicator is
+   * still Fluent's.
+   */
+  cellInput: { width: '100%', minWidth: 0 },
   numericInput: { '& input': { fontVariantNumeric: 'tabular-nums' } },
   footer: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '12px 16px',
-    borderTopWidth: '1px',
+    paddingTop: tokens.spacingVerticalM,
+    paddingBottom: tokens.spacingVerticalM,
+    paddingLeft: tokens.spacingHorizontalM,
+    paddingRight: tokens.spacingHorizontalM,
+    borderTopWidth: tokens.strokeWidthThin,
     borderTopStyle: 'solid',
-    borderTopColor: gradlyTokens.ink100,
-  },
-  invalid: {
-    ...shorthands.borderColor(gradlyTokens.danger),
-    ':hover': { ...shorthands.borderColor(gradlyTokens.danger) },
+    borderTopColor: tokens.colorNeutralStroke2,
   },
 })
 
@@ -118,19 +99,18 @@ export function EditableTable<T extends Record<string, unknown>>({
   return (
     <div className={mergeClasses(s.shell, className)}>
       <Table size="small">
-        <TableHeader className={s.header}>
+        <TableHeader>
           <TableRow>
             {columns.map((c) => (
               <TableHeaderCell
                 key={c.field}
-                className={s.headerCell}
                 style={c.width ? { width: c.width } : undefined}
               >
-                <Kicker>{c.header}</Kicker>
+                <Caption1>{c.header}</Caption1>
               </TableHeaderCell>
             ))}
             {onRemove && (
-              <TableHeaderCell className={s.headerCell} style={{ width: 48 }}>
+              <TableHeaderCell style={{ width: 48 }}>
                 <span className="sr-only" />
               </TableHeaderCell>
             )}
@@ -138,7 +118,7 @@ export function EditableTable<T extends Record<string, unknown>>({
         </TableHeader>
         <TableBody>
           {rows.map((row, i) => (
-            <TableRow key={i} className={s.row}>
+            <TableRow key={i}>
               {columns.map((c) => {
                 const invalid = c.validate?.(row)
                 return (
@@ -150,10 +130,10 @@ export function EditableTable<T extends Record<string, unknown>>({
                       withArrow
                     >
                       <Input
+                        appearance="underline"
                         className={mergeClasses(
                           s.cellInput,
-                          c.kind === 'number' && s.numericInput,
-                          invalid && s.invalid
+                          c.kind === 'number' && s.numericInput
                         )}
                         value={String(row[c.field] ?? '')}
                         placeholder={c.placeholder}
@@ -175,7 +155,7 @@ export function EditableTable<T extends Record<string, unknown>>({
                       icon={<DeleteRegular />}
                       onClick={() => onRemove(i)}
                       label={`Remove row ${i + 1}`}
-                      size="sm"
+                      size="small"
                     />
                   </Tooltip>
                 </TableCell>

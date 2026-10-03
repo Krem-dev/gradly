@@ -3,12 +3,12 @@
 import { forwardRef, useId, useRef, useState } from 'react'
 import {
   Field,
-  fieldClassNames,
   Label,
   Input,
   Textarea,
   Dropdown,
   Option,
+  OptionGroup,
   Combobox,
   SpinButton,
   Slider,
@@ -17,9 +17,10 @@ import {
   Radio,
   RadioGroup,
   SearchBox,
-  Button,
+  InfoLabel,
   makeStyles,
   mergeClasses,
+  shorthands,
   tokens,
   type FieldProps,
   type InputProps,
@@ -29,127 +30,91 @@ import {
   type SwitchProps,
   type CheckboxProps,
   type SpinButtonProps,
-  shorthands,
 } from '@fluentui/react-components'
 import { EyeRegular, EyeOffRegular } from '@fluentui/react-icons'
-import { gradlyTokens } from '@/lib/fluent'
+import { IconButton } from './Button'
 
 /**
- * Fluent's `Field` renders its label through a slot, whose type is narrower than
- * `ReactNode` (no bigint, no Promise). Aliasing it keeps our field props exactly as
- * permissive as what Fluent will actually accept.
+ * Form controls.
+ *
+ * Every one of these is Fluent's `Field` paired with a Fluent control, with no
+ * restyling of either. `Field` owns the label, hint, validation message, the
+ * required marker and the `aria-describedby` / `aria-invalid` wiring; the control
+ * keeps Fluent's own sizes, focus indicator and high-contrast behaviour.
+ *
+ * The wrappers exist only to collapse the `<Field><Control/></Field>` pair into
+ * one call with a flat prop list, so a form is a list of fields rather than a
+ * tree. Each raw Fluent component is re-exported at the bottom for the cases
+ * where a page needs the full API.
+ *
+ * Two are genuine compositions, because Fluent has no equivalent: the card
+ * variant of `RadioField`, and `OTPField`.
  */
-type FieldLabel = FieldProps['label']
 
 const useStyles = makeStyles({
-  /**
-   * Field labels in the old design were 10px mono, uppercase, letter-spaced — not
-   * Fluent's 14px sentence-case. Fluent exposes the label as a slot, so rather than
-   * re-implement Field (and lose its aria-describedby / validation wiring) we
-   * restyle the rendered label from the Field root.
-   *
-   * Scoped to `fieldClassNames.label`, NOT to the `label` element: a bare
-   * `& label` also matches every nested <label> — Radio/Switch/Checkbox labels and
-   * the choice-card rows — which rendered their body copy as 10px uppercase mono.
-   */
-  field: {
-    [`& .${fieldClassNames.label}`]: {
-      fontFamily: gradlyTokens.fontFamilyMono,
-      fontSize: '10px',
-      lineHeight: '1.4',
-      textTransform: 'uppercase',
-      letterSpacing: '0.18em',
-      color: gradlyTokens.ink500,
-      fontWeight: '400',
-      paddingBottom: '8px',
-    },
-  },
-  control: {
-    width: '100%',
-    height: '48px',
-    borderRadius: tokens.borderRadiusLarge,
-    fontSize: tokens.fontSizeBase300,
-    backgroundColor: tokens.colorNeutralBackground1,
-    ':hover': { ...shorthands.borderColor(gradlyTokens.ink300) },
-    // Fluent draws focus with a bottom "focus bar"; swap it for the amber ring
-    // the rest of the system uses.
-    ':focus-within': {
-      outlineWidth: '2px',
-      outlineStyle: 'solid',
-      outlineColor: gradlyTokens.amber,
-      outlineOffset: '1px',
-    },
-    '::after': { display: 'none' },
-  },
-  textarea: { height: 'auto', minHeight: '120px', paddingTop: '12px', paddingBottom: '12px' },
   fullWidth: { width: '100%' },
-  revealBtn: { minWidth: '32px', height: '32px', padding: '0' },
 
-  // ── Slider ────────────────────────────────────────────────────────────────
-  sliderRow: { display: 'flex', alignItems: 'center', columnGap: '16px', width: '100%' },
-  sliderReadout: {
-    fontFamily: gradlyTokens.fontFamilyMono,
-    fontSize: '13px',
-    fontVariantNumeric: 'tabular-nums',
-    color: gradlyTokens.ink900,
-    minWidth: '48px',
-    textAlign: 'right',
-    flexShrink: 0,
-  },
-  slider: { flexGrow: 1, minWidth: '0' },
-  sliderScale: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontFamily: gradlyTokens.fontFamilyMono,
-    fontSize: '10px',
-    color: gradlyTokens.ink400,
-    marginTop: '6px',
-  },
-
-  // ── Choice groups ─────────────────────────────────────────────────────────
   choiceCard: {
     display: 'flex',
     alignItems: 'flex-start',
-    columnGap: '12px',
-    padding: '14px 16px',
-    borderRadius: tokens.borderRadiusLarge,
-    ...shorthands.border('1px', 'solid', gradlyTokens.ink100),
+    columnGap: tokens.spacingHorizontalM,
+    paddingTop: tokens.spacingVerticalM,
+    paddingBottom: tokens.spacingVerticalM,
+    paddingLeft: tokens.spacingHorizontalM,
+    paddingRight: tokens.spacingHorizontalM,
+    borderRadius: tokens.borderRadiusMedium,
+    ...shorthands.border(tokens.strokeWidthThin, 'solid', tokens.colorNeutralStroke1),
+    backgroundColor: tokens.colorNeutralBackground1,
     cursor: 'pointer',
     width: '100%',
-    backgroundColor: tokens.colorNeutralBackground1,
-    ':hover': { ...shorthands.borderColor(gradlyTokens.ink300) },
+    ':hover': { backgroundColor: tokens.colorNeutralBackground1Hover },
   },
   choiceCardChecked: {
-    ...shorthands.borderColor(tokens.colorBrandBackground),
+    ...shorthands.borderColor(tokens.colorBrandStroke1),
     backgroundColor: tokens.colorBrandBackground2,
   },
+  choiceText: { display: 'flex', flexDirection: 'column', rowGap: '2px' },
+  choiceDesc: { color: tokens.colorNeutralForeground3, fontSize: tokens.fontSizeBase200 },
 
-  // ── OTP ───────────────────────────────────────────────────────────────────
-  otpWrap: { display: 'flex', flexDirection: 'column', rowGap: '8px' },
-  otpLabel: {
-    fontFamily: gradlyTokens.fontFamilyMono,
-    fontSize: '10px',
-    lineHeight: '1.4',
-    textTransform: 'uppercase',
-    letterSpacing: '0.18em',
-    color: gradlyTokens.ink500,
-    fontWeight: '400',
-  },
-  otpRow: { display: 'flex', justifyContent: 'center', columnGap: '10px' },
-  otpCellError: { ...shorthands.borderColor(gradlyTokens.danger) },
-  otpError: { fontSize: tokens.fontSizeBase200, color: gradlyTokens.danger },
+  otpWrap: { display: 'flex', flexDirection: 'column', rowGap: tokens.spacingVerticalS },
+  otpRow: { display: 'flex', columnGap: tokens.spacingHorizontalS },
   otpCell: {
-    width: '52px',
-    height: '60px',
+    width: '48px',
     '& input': {
       textAlign: 'center',
-      fontFamily: gradlyTokens.fontFamilyDisplay,
-      fontSize: '26px',
-      paddingLeft: '0',
-      paddingRight: '0',
+      fontSize: tokens.fontSizeBase500,
+      paddingLeft: 0,
+      paddingRight: 0,
     },
   },
+  otpError: { color: tokens.colorPaletteRedForeground1, fontSize: tokens.fontSizeBase200 },
+
+  sliderRow: {
+    display: 'flex',
+    alignItems: 'center',
+    columnGap: tokens.spacingHorizontalM,
+    width: '100%',
+  },
+  slider: { flexGrow: 1, minWidth: 0 },
+  sliderReadout: {
+    minWidth: '48px',
+    textAlign: 'right',
+    flexShrink: 0,
+    fontVariantNumeric: 'tabular-nums',
+    color: tokens.colorNeutralForeground1,
+    fontSize: tokens.fontSizeBase300,
+  },
+  sliderScale: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: tokens.spacingVerticalXXS,
+    color: tokens.colorNeutralForeground3,
+    fontSize: tokens.fontSizeBase200,
+  },
 })
+
+/** Fluent's `Field` renders its label through a slot, narrower than ReactNode. */
+type FieldLabel = FieldProps['label']
 
 /* ─────────────────────────── Text ─────────────────────────── */
 
@@ -160,15 +125,10 @@ export type TextFieldProps = Omit<InputProps, 'size'> & {
   /** Renders a show/hide toggle. Implied by `type="password"`. */
   togglePassword?: boolean
   required?: boolean
+  size?: InputProps['size']
   className?: string
 }
 
-/**
- * Single-line text input. Fluent's `Field` owns the label/hint/error association
- * (`aria-describedby`, `aria-invalid`, the required marker), so none of that is
- * re-implemented here — this only adds the Gradly label style, the 48px control
- * height, and the password reveal.
- */
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   function TextField(
     { label, hint, error, togglePassword, required, className, type = 'text', ...rest },
@@ -177,7 +137,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     const s = useStyles()
     const [show, setShow] = useState(false)
     const isPassword = type === 'password' || togglePassword
-    const resolvedType = isPassword ? (show ? 'text' : 'password') : type
 
     return (
       <Field
@@ -186,23 +145,23 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
         validationMessage={error}
         validationState={error ? 'error' : 'none'}
         required={required}
-        className={mergeClasses(s.field, s.fullWidth, className)}
+        className={mergeClasses(s.fullWidth, className)}
       >
         <Input
           ref={ref}
-          type={resolvedType}
-          className={s.control}
+          type={isPassword ? (show ? 'text' : 'password') : type}
           contentAfter={
             isPassword ? (
-              <Button
+              <IconButton
                 appearance="transparent"
-                className={s.revealBtn}
+                size="small"
+                shape="rounded"
                 icon={show ? <EyeOffRegular /> : <EyeRegular />}
                 onClick={() => setShow((v) => !v)}
-                // Keep it out of the tab order: the input is the control, this is
-                // a convenience affordance, and tabbing into it mid-form is noise.
+                // Out of the tab order: the input is the control, this is a
+                // convenience, and tabbing into it mid-form is noise.
                 tabIndex={-1}
-                aria-label={show ? 'Hide password' : 'Show password'}
+                label={show ? 'Hide password' : 'Show password'}
               />
             ) : undefined
           }
@@ -231,14 +190,9 @@ export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaFieldProps>
         validationMessage={error}
         validationState={error ? 'error' : 'none'}
         required={required}
-        className={mergeClasses(s.field, s.fullWidth, className)}
+        className={mergeClasses(s.fullWidth, className)}
       >
-        <Textarea
-          ref={ref}
-          className={mergeClasses(s.control, s.textarea)}
-          resize="vertical"
-          {...rest}
-        />
+        <Textarea ref={ref} resize="vertical" {...rest} />
       </Field>
     )
   }
@@ -258,13 +212,12 @@ export type SelectFieldProps = Omit<DropdownProps, 'children'> & {
 }
 
 /**
- * Uses Fluent's `Dropdown` (a listbox) rather than a native `<select>`: it renders
- * a real popover, so option text can be styled and truncated consistently across
- * browsers, and it keeps the same focus ring as every other control here.
+ * Fluent's `Dropdown` (a listbox with a real popover), not a native `<select>`:
+ * option text renders and truncates identically across browsers and it keeps
+ * Fluent's focus indicator.
  *
- * Fluent's Dropdown is controlled by `selectedOptions` (an array) plus a display
- * `value` — passing only `value` looks right but leaves the list with nothing
- * checked, so callers should set both, or use `defaultSelectedOptions`.
+ * Fluent drives it with `selectedOptions` (an array) *and* a display `value` —
+ * passing only `value` looks right but leaves nothing checked in the list.
  */
 export function SelectField({
   label,
@@ -283,9 +236,9 @@ export function SelectField({
       validationMessage={error}
       validationState={error ? 'error' : 'none'}
       required={required}
-      className={mergeClasses(s.field, s.fullWidth, className)}
+      className={mergeClasses(s.fullWidth, className)}
     >
-      <Dropdown className={s.control} {...rest}>
+      <Dropdown {...rest}>
         {options.map((o) => (
           <Option key={o.value} value={o.value} text={o.label} disabled={o.disabled}>
             {o.label}
@@ -304,7 +257,6 @@ export type NumberFieldProps = Omit<SpinButtonProps, 'size'> & {
   className?: string
 }
 
-/** Credit hours, scores, counts — anything with steppers and a numeric range. */
 export function NumberField({
   label,
   hint,
@@ -321,9 +273,9 @@ export function NumberField({
       validationMessage={error}
       validationState={error ? 'error' : 'none'}
       required={required}
-      className={mergeClasses(s.field, s.fullWidth, className)}
+      className={mergeClasses(s.fullWidth, className)}
     >
-      <SpinButton className={s.control} {...rest} />
+      <SpinButton {...rest} />
     </Field>
   )
 }
@@ -333,69 +285,63 @@ export function SearchField({
   placeholder = 'Search',
   className,
   ...rest
-}: {
-  label?: FieldLabel
-  placeholder?: string
-  className?: string
-} & React.ComponentProps<typeof SearchBox>) {
+}: { label?: FieldLabel; placeholder?: string; className?: string } & React.ComponentProps<
+  typeof SearchBox
+>) {
   const s = useStyles()
   return label ? (
-    <Field label={label} className={mergeClasses(s.field, s.fullWidth, className)}>
-      <SearchBox className={s.control} placeholder={placeholder} {...rest} />
+    <Field label={label} className={mergeClasses(s.fullWidth, className)}>
+      <SearchBox placeholder={placeholder} {...rest} />
     </Field>
   ) : (
-    <SearchBox
-      className={mergeClasses(s.control, className)}
-      placeholder={placeholder}
-      {...rest}
-    />
+    <SearchBox className={className} placeholder={placeholder} {...rest} />
   )
 }
 
 /* ─────────────────────────── Toggles ─────────────────────────── */
 
 export function CheckboxField({
-  label,
   error,
   className,
   ...rest
-}: CheckboxProps & { label?: React.ReactNode; error?: string; className?: string }) {
-  const s = useStyles()
+}: CheckboxProps & { error?: string; className?: string }) {
   return error ? (
-    <Field
-      validationMessage={error}
-      validationState="error"
-      className={mergeClasses(s.field, className)}
-    >
-      <Checkbox label={label} {...rest} />
+    <Field validationMessage={error} validationState="error" className={className}>
+      <Checkbox {...rest} />
     </Field>
   ) : (
-    <Checkbox className={className} label={label} {...rest} />
+    <Checkbox className={className} {...rest} />
   )
 }
 
 export function SwitchField({
-  label,
   hint,
   className,
   ...rest
-}: SwitchProps & { label?: React.ReactNode; hint?: string; className?: string }) {
-  const s = useStyles()
+}: SwitchProps & { hint?: string; className?: string }) {
   return hint ? (
-    <Field hint={hint} className={mergeClasses(s.field, className)}>
-      <Switch label={label} {...rest} />
+    <Field hint={hint} className={className}>
+      <Switch {...rest} />
     </Field>
   ) : (
-    <Switch className={className} label={label} {...rest} />
+    <Switch className={className} {...rest} />
   )
 }
 
-export type RadioOption = { value: string; label: string; description?: string; disabled?: boolean }
+export type RadioOption = {
+  value: string
+  label: string
+  description?: string
+  disabled?: boolean
+}
 
 /**
- * Radio group with an optional card treatment — the big tappable choice rows the
- * onboarding and course-selection flows use. `cards` keeps Fluent's `Radio` (and
- * therefore its roving focus and arrow-key handling) and only changes the chrome.
+ * Radio group, with an optional card treatment for the big tappable choice rows
+ * the onboarding and course-selection flows use.
+ *
+ * The card chrome is custom (Fluent has no choice-card component) but each row
+ * is still a Fluent `Radio`, so arrow-key navigation, the roving tab index and
+ * the checked indicator are Fluent's, not a re-implementation.
  */
 export function RadioField({
   label,
@@ -423,37 +369,23 @@ export function RadioField({
       hint={error ? undefined : hint}
       validationMessage={error}
       validationState={error ? 'error' : 'none'}
-      className={mergeClasses(s.field, s.fullWidth, className)}
+      className={mergeClasses(s.fullWidth, className)}
     >
       <RadioGroup
         value={value}
         onChange={(_, data) => onValueChange?.(data.value)}
-        style={cards ? { gap: 10 } : undefined}
+        style={cards ? { gap: tokens.spacingVerticalS } : undefined}
       >
         {options.map((o) =>
           cards ? (
             <label
               key={o.value}
-              className={mergeClasses(
-                s.choiceCard,
-                value === o.value && s.choiceCardChecked
-              )}
+              className={mergeClasses(s.choiceCard, value === o.value && s.choiceCardChecked)}
             >
-              <Radio value={o.value} disabled={o.disabled} label={undefined} />
-              <span>
-                <span style={{ display: 'block', fontWeight: 500 }}>{o.label}</span>
-                {o.description && (
-                  <span
-                    style={{
-                      display: 'block',
-                      fontSize: 13,
-                      color: 'var(--gradly-ink-500)',
-                      marginTop: 2,
-                    }}
-                  >
-                    {o.description}
-                  </span>
-                )}
+              <Radio value={o.value} disabled={o.disabled} />
+              <span className={s.choiceText}>
+                <span>{o.label}</span>
+                {o.description && <span className={s.choiceDesc}>{o.description}</span>}
               </span>
             </label>
           ) : (
@@ -478,9 +410,9 @@ export type SliderFieldProps = Omit<SliderProps, 'size'> & {
 }
 
 /**
- * Slider with a live readout. Fluent's `Slider` has no built-in value display, and
- * a slider without one forces the user to guess — so the readout is part of the
- * field rather than something each page re-adds.
+ * Fluent's `Slider` with a live value readout — Fluent has no built-in display,
+ * and a slider without one makes the user guess, so it is part of the field
+ * rather than something each page re-adds.
  */
 export function SliderField({
   label,
@@ -496,17 +428,11 @@ export function SliderField({
   ...rest
 }: SliderFieldProps) {
   const s = useStyles()
-  const [internal, setInternal] = useState<number>(
-    value ?? defaultValue ?? min
-  )
+  const [internal, setInternal] = useState<number>(value ?? defaultValue ?? min)
   const current = value ?? internal
 
   return (
-    <Field
-      label={label}
-      hint={hint}
-      className={mergeClasses(s.field, s.fullWidth, className)}
-    >
+    <Field label={label} hint={hint} className={mergeClasses(s.fullWidth, className)}>
       <div>
         <div className={s.sliderRow}>
           <Slider
@@ -538,18 +464,13 @@ export function SliderField({
 /* ─────────────────────────── OTP ─────────────────────────── */
 
 /**
- * Fixed-length numeric code entry.
+ * Fixed-length code entry. Fluent has no OTP component, so this composes one
+ * from Fluent `Input` cells plus a Fluent `Label`.
  *
- * Each cell is a Fluent `Input`, so focus styling and high-contrast behaviour
- * match every other field; the per-cell focus moves, backspace walk-back and
- * full-code paste are handled here.
- *
- * Deliberately NOT wrapped in `Field`: Field assigns its generated control id to
- * the input it labels, and with several inputs inside one Field all of them end up
- * sharing that id — invalid, and it breaks every `aria-describedby` pointing at it.
- * So the label and error text are rendered directly and the group is tied together
- * with `role="group"` + `aria-labelledby`, which is what a screen reader needs to
- * announce "Verification code, Digit 1 of 4".
+ * Deliberately not wrapped in `Field`: Field assigns its generated control id to
+ * the input it labels, and several inputs inside one Field all end up sharing it.
+ * The group is tied together with `role="group"` + `aria-labelledby` instead,
+ * which is what a screen reader needs to announce "Verification code, Digit 1 of 4".
  */
 export function OTPField({
   length = 4,
@@ -557,7 +478,7 @@ export function OTPField({
   onChange,
   error,
   label,
-  autoFocus = true,
+  autoFocus = false,
 }: {
   length?: number
   value: string
@@ -582,11 +503,7 @@ export function OTPField({
 
   return (
     <div className={s.otpWrap}>
-      {label && (
-        <Label id={labelId} className={s.otpLabel}>
-          {label}
-        </Label>
-      )}
+      {label && <Label id={labelId}>{label}</Label>}
       <div
         className={s.otpRow}
         role="group"
@@ -597,7 +514,8 @@ export function OTPField({
           <Input
             key={i}
             id={`${baseId}-${i}`}
-            className={mergeClasses(s.control, s.otpCell, error && s.otpCellError)}
+            className={s.otpCell}
+            appearance={error ? 'outline' : undefined}
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus={autoFocus && i === 0}
             inputMode="numeric"
@@ -624,10 +542,7 @@ export function OTPField({
               if (ev.key === 'ArrowRight' && i < length - 1) focusCell(i + 1)
             }}
             onPaste={(ev) => {
-              const pasted = ev.clipboardData
-                .getData('text')
-                .replace(/\D/g, '')
-                .slice(0, length)
+              const pasted = ev.clipboardData.getData('text').replace(/\D/g, '').slice(0, length)
               if (!pasted) return
               ev.preventDefault()
               onChange(pasted)
@@ -647,10 +562,12 @@ export function OTPField({
 
 export {
   Field,
+  Label,
   Input,
   Textarea,
   Dropdown,
   Option,
+  OptionGroup,
   Combobox,
   SpinButton,
   Slider,
@@ -660,5 +577,5 @@ export {
   RadioGroup,
   SearchBox,
   InfoLabel,
-} from '@fluentui/react-components'
+}
 export type { FieldProps }

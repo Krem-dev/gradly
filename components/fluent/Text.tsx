@@ -1,164 +1,22 @@
 'use client'
 
-import {
-  Text as FluentText,
-  makeStyles,
-  mergeClasses,
-  tokens,
-  typographyStyles,
-  type TextProps,
-} from '@fluentui/react-components'
-import { gradlyTokens } from '@/lib/fluent'
-
-const useStyles = makeStyles({
-  // ── Editorial display scale (serif, clamped, tight tracking) ──────────────
-  display: {
-    fontFamily: gradlyTokens.fontFamilyDisplay,
-    fontWeight: '600',
-    color: gradlyTokens.ink900,
-    margin: '0',
-    textWrap: 'balance',
-    fontFeatureSettings: "'ss01'",
-  },
-  d2xl: { fontSize: gradlyTokens.displayXxl, lineHeight: '0.95', letterSpacing: '-0.035em' },
-  dxl: { fontSize: gradlyTokens.displayXl, lineHeight: '1.02', letterSpacing: '-0.03em' },
-  dlg: { fontSize: gradlyTokens.displayLg, lineHeight: '1.05', letterSpacing: '-0.03em' },
-  dmd: { fontSize: gradlyTokens.displayMd, lineHeight: '1.1', letterSpacing: '-0.02em' },
-
-  // ── Body copy ─────────────────────────────────────────────────────────────
-  lead: {
-    ...typographyStyles.body1,
-    fontSize: tokens.fontSizeBase400,
-    lineHeight: tokens.lineHeightBase500,
-    color: gradlyTokens.ink500,
-    margin: '0',
-  },
-  body: {
-    ...typographyStyles.body1,
-    color: gradlyTokens.ink700,
-    margin: '0',
-  },
-  muted: { color: gradlyTokens.ink500 },
-
-  // ── Mono kicker (the uppercase tracked label used all over the old UI) ────
-  kicker: {
-    fontFamily: gradlyTokens.fontFamilyMono,
-    fontSize: '10px',
-    lineHeight: '1.4',
-    textTransform: 'uppercase',
-    letterSpacing: '0.18em',
-    color: gradlyTokens.ink500,
-    margin: '0',
-  },
-
-  // ── Numeric display (stat tiles, results) ────────────────────────────────
-  stat: {
-    fontFamily: gradlyTokens.fontFamilyDisplay,
-    fontSize: '44px',
-    lineHeight: '1',
-    letterSpacing: '-0.03em',
-    fontWeight: '600',
-    color: gradlyTokens.ink900,
-    fontVariantNumeric: 'tabular-nums',
-    margin: '0',
-  },
-})
-
-type DisplaySize = '2xl' | 'xl' | 'lg' | 'md'
-
-export type DisplayProps = {
-  size?: DisplaySize
-  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span' | 'div'
-  className?: string
-  children: React.ReactNode
-}
-
 /**
- * The serif editorial headline. Replaces every `font-display text-display-*`
- * combination from the Tailwind build.
+ * Typography is Fluent's, unmodified.
  *
- * `as` is separate from `size` on purpose: heading level is a document-structure
- * decision (one h1 per page) and size is a visual one. Coupling them is how pages
- * end up with three h1s because the designer wanted big text.
+ * Fluent ships a complete type ramp as components — `Display`, `LargeTitle`,
+ * `Title1..3`, `Subtitle1..2`, `Body1..2`, `Caption1..2` — each bound to the
+ * theme's font tokens. The previous version of this file replaced that ramp with
+ * a serif display face and a custom mono label, which is exactly what made the UI
+ * stop looking like Fluent.
+ *
+ * Everything below is a re-export. The only additions are two tiny semantic
+ * helpers that compose Fluent components rather than restyle them.
  */
-export function Display({
-  size = 'lg',
-  as: Tag = 'h2',
-  className,
-  children,
-}: DisplayProps) {
-  const s = useStyles()
-  const sizeClass = { '2xl': s.d2xl, xl: s.dxl, lg: s.dlg, md: s.dmd }[size]
-  return <Tag className={mergeClasses(s.display, sizeClass, className)}>{children}</Tag>
-}
 
-/** Intro paragraph under a Display. Larger and lighter than body copy. */
-export function Lead({
-  className,
-  children,
-  as: Tag = 'p',
-}: {
-  className?: string
-  children: React.ReactNode
-  as?: 'p' | 'div'
-}) {
-  const s = useStyles()
-  return <Tag className={mergeClasses(s.lead, className)}>{children}</Tag>
-}
-
-/** Default running text. */
-export function Body({
-  className,
-  muted,
-  children,
-  as: Tag = 'p',
-}: {
-  className?: string
-  muted?: boolean
-  children: React.ReactNode
-  as?: 'p' | 'div' | 'span'
-}) {
-  const s = useStyles()
-  return (
-    <Tag className={mergeClasses(s.body, muted && s.muted, className)}>{children}</Tag>
-  )
-}
-
-/** Uppercase mono label — section eyebrows, field labels, table headers. */
-export function Kicker({
-  className,
-  children,
-  as: Tag = 'span',
-}: {
-  className?: string
-  children: React.ReactNode
-  as?: 'span' | 'div' | 'p' | 'label'
-}) {
-  const s = useStyles()
-  return <Tag className={mergeClasses(s.kicker, className)}>{children}</Tag>
-}
-
-/** Big tabular number for stat tiles and conversion results. */
-export function Stat({
-  className,
-  children,
-}: {
-  className?: string
-  children: React.ReactNode
-}) {
-  const s = useStyles()
-  return <div className={mergeClasses(s.stat, className)}>{children}</div>
-}
-
-/**
- * Re-exported so pages never import from `@fluentui/react-components` directly —
- * one import surface means one place to restyle later.
- */
-export function GradlyText(props: TextProps) {
-  return <FluentText {...props} />
-}
-
-export {
+import {
+  Text,
+  Display,
+  LargeTitle,
   Title1,
   Title2,
   Title3,
@@ -166,8 +24,103 @@ export {
   Subtitle2,
   Body1,
   Body1Strong,
+  Body1Stronger,
   Body2,
   Caption1,
   Caption1Strong,
-  LargeTitle,
+  Caption1Stronger,
+  Caption2,
+  Caption2Strong,
+  makeStyles,
+  mergeClasses,
+  tokens,
 } from '@fluentui/react-components'
+
+export {
+  Text,
+  Display,
+  LargeTitle,
+  Title1,
+  Title2,
+  Title3,
+  Subtitle1,
+  Subtitle2,
+  Body1,
+  Body1Strong,
+  Body1Stronger,
+  Body2,
+  Caption1,
+  Caption1Strong,
+  Caption1Stronger,
+  Caption2,
+  Caption2Strong,
+}
+
+const useStyles = makeStyles({
+  lead: { color: tokens.colorNeutralForeground2, display: 'block' },
+  muted: { color: tokens.colorNeutralForeground3 },
+  stat: {
+    fontSize: tokens.fontSizeHero800,
+    lineHeight: tokens.lineHeightHero800,
+    fontWeight: tokens.fontWeightSemibold,
+    color: tokens.colorNeutralForeground1,
+    // Tabular figures stop a column of stat tiles jittering as values change.
+    fontVariantNumeric: 'tabular-nums',
+    display: 'block',
+  },
+  block: { display: 'block' },
+})
+
+/**
+ * Intro paragraph under a heading. Fluent's `Body1` at the secondary foreground —
+ * a convention, not a new style.
+ */
+export function Lead({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  const s = useStyles()
+  return (
+    <Body1 as="p" block className={mergeClasses(s.lead, className)}>
+      {children}
+    </Body1>
+  )
+}
+
+/** Running text. `muted` drops to Fluent's tertiary foreground. */
+export function Body({
+  children,
+  muted,
+  className,
+  as = 'p',
+}: {
+  children: React.ReactNode
+  muted?: boolean
+  className?: string
+  as?: 'p' | 'span'
+}) {
+  const s = useStyles()
+  return (
+    <Body1 as={as} block={as !== 'span'} className={mergeClasses(muted && s.muted, className)}>
+      {children}
+    </Body1>
+  )
+}
+
+/**
+ * Big tabular number for stat tiles and conversion results.
+ * Fluent's hero type size — the one piece of the ramp with no component wrapper.
+ */
+export function Stat({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  const s = useStyles()
+  return <span className={mergeClasses(s.stat, className)}>{children}</span>
+}

@@ -1,198 +1,110 @@
 'use client'
 
 import {
-  Card as FluentCard,
+  Card,
+  CardHeader,
+  CardFooter,
+  CardPreview,
+  Caption1,
+  Button,
   makeStyles,
   mergeClasses,
   tokens,
   type CardProps,
-  shorthands,
 } from '@fluentui/react-components'
-import { gradlyTokens, hoverTransition } from '@/lib/fluent'
-import { Body, Display, Kicker, Stat } from './Text'
-import { Stack } from './Layout'
+import { Body, Stat, Title3 } from './Text'
+
+/**
+ * Surfaces are Fluent's `Card`.
+ *
+ * Fluent ships four appearances — `filled`, `filled-alternative`, `outline`,
+ * `subtle` — plus `selected`, `focusMode` and the roving-focus behaviour that
+ * comes with them. Those are used directly; `Card` is re-exported unchanged.
+ *
+ * The two composites below (`StatTile`, `EmptyState`) are app patterns Fluent has
+ * no component for. Both are assembled from Fluent parts and Fluent tokens.
+ */
 
 const useStyles = makeStyles({
-  card: {
-    borderRadius: gradlyTokens.radiusCard,
-    transition: hoverTransition,
-    // Fluent Card defaults to a 12px gap flex column; most Gradly cards lay out
-    // their own content, so neutralise it and let the consumer choose.
-    rowGap: '0',
+  statTile: {
+    display: 'flex',
+    flexDirection: 'column',
+    rowGap: tokens.spacingVerticalXS,
   },
-  padSm: { padding: '16px' },
-  padMd: { padding: '24px' },
-  padLg: { padding: '24px', '@media (min-width: 640px)': { padding: '32px' } },
-  padNone: { padding: '0' },
+  statHead: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: tokens.spacingHorizontalS,
+  },
+  label: { color: tokens.colorNeutralForeground3 },
+  deltaUp: { color: tokens.colorStatusSuccessForeground1 },
+  deltaDown: { color: tokens.colorStatusDangerForeground1 },
+  deltaFlat: { color: tokens.colorNeutralForeground3 },
 
-  toneSurface: {
-    backgroundColor: tokens.colorNeutralBackground1,
-    ...shorthands.border('1px', 'solid', gradlyTokens.ink100),
-    boxShadow: gradlyTokens.shadowSoft,
-  },
-  toneMuted: {
-    backgroundColor: gradlyTokens.surfaceMuted,
-    ...shorthands.border('1px', 'solid', gradlyTokens.ink100),
-    boxShadow: 'none',
-  },
-  toneOutline: {
-    backgroundColor: 'transparent',
-    ...shorthands.border('1px', 'solid', gradlyTokens.ink200),
-    boxShadow: 'none',
-  },
-  toneInk: {
-    backgroundColor: gradlyTokens.surfaceInk,
-    color: '#FFFFFF',
-    ...shorthands.border('1px', 'solid', 'rgba(255,255,255,0.10)'),
-    boxShadow: 'none',
-    '--gradly-ink-900': '#FFFFFF',
-    '--gradly-ink-800': '#E2E8F0',
-    '--gradly-ink-700': '#CBD5E1',
-    '--gradly-ink-600': '#94A3B8',
-    '--gradly-ink-500': '#94A3B8',
-    '--gradly-ink-400': '#64748B',
-    '--gradly-ink-300': '#475569',
-    '--gradly-ink-200': '#334155',
-    '--gradly-ink-100': 'rgba(255,255,255,0.12)',
-    '--gradly-ink-50': 'rgba(255,255,255,0.06)',
-  },
-  toneAmber: {
-    backgroundColor: gradlyTokens.amberSubtle,
-    ...shorthands.border('1px', 'solid', 'rgba(245,158,11,0.3)'),
-    boxShadow: 'none',
-  },
-
-  interactive: {
-    cursor: 'pointer',
-    ':hover': { boxShadow: gradlyTokens.shadowLift, transform: 'translateY(-2px)' },
-    ':active': { transform: 'translateY(0)' },
-  },
-
-  // ── Stat tile ─────────────────────────────────────────────────────────────
-  statTile: { display: 'flex', flexDirection: 'column', rowGap: '10px' },
-  statDelta: { display: 'inline-flex', alignItems: 'center', columnGap: '4px', fontSize: tokens.fontSizeBase200 },
-  deltaUp: { color: gradlyTokens.success },
-  deltaDown: { color: gradlyTokens.danger },
-  deltaFlat: { color: gradlyTokens.ink400 },
-
-  // ── Empty state ───────────────────────────────────────────────────────────
   empty: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     textAlign: 'center',
-    rowGap: '12px',
-    paddingTop: '48px',
-    paddingBottom: '48px',
-    paddingLeft: '24px',
-    paddingRight: '24px',
+    rowGap: tokens.spacingVerticalM,
+    paddingTop: tokens.spacingVerticalXXXL,
+    paddingBottom: tokens.spacingVerticalXXXL,
+    paddingLeft: tokens.spacingHorizontalXL,
+    paddingRight: tokens.spacingHorizontalXL,
   },
   emptyIcon: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '56px',
-    height: '56px',
-    borderRadius: gradlyTokens.radiusPill,
-    backgroundColor: gradlyTokens.ink50,
-    color: gradlyTokens.ink400,
-    fontSize: '24px',
+    width: '48px',
+    height: '48px',
+    borderRadius: tokens.borderRadiusCircular,
+    backgroundColor: tokens.colorNeutralBackground3,
+    color: tokens.colorNeutralForeground3,
+    fontSize: tokens.fontSizeBase600,
   },
 })
 
-export type GradlyCardTone = 'surface' | 'muted' | 'outline' | 'ink' | 'amber'
-export type GradlyCardPadding = 'none' | 'sm' | 'md' | 'lg'
-
-export type GradlyCardProps = Omit<CardProps, 'appearance' | 'size'> & {
-  tone?: GradlyCardTone
-  padding?: GradlyCardPadding
-  /** Adds hover lift + pointer. Use for cards that navigate. */
-  interactive?: boolean
-}
-
-/**
- * Surface primitive. Wraps Fluent's `Card`, which brings the roving-focus group
- * behaviour and `selected` state for free, and restyles it to the Gradly tones
- * (the four from the Tailwind build, plus an amber "needs attention" tone).
- */
-export function GradlyCard({
-  tone = 'surface',
-  padding = 'md',
-  interactive = false,
-  className,
-  children,
-  ...rest
-}: GradlyCardProps) {
-  const s = useStyles()
-  const toneClass = {
-    surface: s.toneSurface,
-    muted: s.toneMuted,
-    outline: s.toneOutline,
-    ink: s.toneInk,
-    amber: s.toneAmber,
-  }[tone]
-  const padClass = { none: s.padNone, sm: s.padSm, md: s.padMd, lg: s.padLg }[padding]
-
-  return (
-    <FluentCard
-      className={mergeClasses(
-        s.card,
-        toneClass,
-        padClass,
-        interactive && s.interactive,
-        className
-      )}
-      {...rest}
-    >
-      {children}
-    </FluentCard>
-  )
-}
-
-/**
- * Dashboard metric tile. The number uses the serif display face and tabular
- * figures so a column of tiles doesn't jitter as values change.
- */
+/** Dashboard metric tile: a Fluent Card with a label, a hero number and a delta. */
 export function StatTile({
   label,
   value,
   hint,
   delta,
   icon,
-  tone = 'surface',
+  appearance = 'outline',
 }: {
   label: string
   value: React.ReactNode
   hint?: string
-  /** e.g. `{ direction: 'up', text: '+2 this week' }` */
   delta?: { direction: 'up' | 'down' | 'flat'; text: string }
   icon?: React.ReactNode
-  tone?: GradlyCardTone
+  appearance?: CardProps['appearance']
 }) {
   const s = useStyles()
   return (
-    <GradlyCard tone={tone} padding="md">
+    <Card appearance={appearance}>
       <div className={s.statTile}>
-        <Stack direction="row" justify="between" align="center" gap={8}>
-          <Kicker>{label}</Kicker>
+        <div className={s.statHead}>
+          <Caption1 className={s.label}>{label}</Caption1>
           {icon}
-        </Stack>
+        </div>
         <Stat>{value}</Stat>
         {delta && (
-          <span
+          <Caption1
             className={mergeClasses(
-              s.statDelta,
               delta.direction === 'up' && s.deltaUp,
               delta.direction === 'down' && s.deltaDown,
               delta.direction === 'flat' && s.deltaFlat
             )}
           >
             {delta.text}
-          </span>
+          </Caption1>
         )}
-        {hint && <Body muted>{hint}</Body>}
+        {hint && <Caption1 className={s.label}>{hint}</Caption1>}
       </div>
-    </GradlyCard>
+    </Card>
   )
 }
 
@@ -212,13 +124,12 @@ export function EmptyState({
   return (
     <div className={s.empty}>
       {icon && <span className={s.emptyIcon}>{icon}</span>}
-      <Display size="md" as="p">
-        {title}
-      </Display>
+      <Title3>{title}</Title3>
       {description && <Body muted>{description}</Body>}
-      {action && <div style={{ marginTop: 8 }}>{action}</div>}
+      {action}
     </div>
   )
 }
 
-export { CardHeader, CardFooter, CardPreview } from '@fluentui/react-components'
+export { Card, CardHeader, CardFooter, CardPreview }
+export type { CardProps }
